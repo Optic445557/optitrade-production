@@ -1,0 +1,26 @@
+<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>System Readiness | OptiTrade</title><link rel="stylesheet" href="/admin/admin-v2.css"></head><body><div class="shell"><aside class="side"><div class="brand">Opti<i>Trade</i></div><nav class="nav"><a href="/admin/dashboard.html">Overview</a><a href="/admin/users-v2.html">Users</a><a href="/admin/managed-trades.html">Trade Requests</a><a href="/admin/message-center.html">Message Center</a><a href="/admin/telegram.html">Telegram Alerts</a><a href="/admin/email.html">Email Delivery</a><a class="active" href="/admin/readiness.html">System Readiness</a><a href="/admin/welcome.html">Welcome Message</a><a href="/admin/banners.html">Banner Manager</a><a href="/admin/deposits.html">Deposits</a><a href="/admin/withdrawals.html">Withdrawals</a><a href="/admin/wallets.html">Deposit Wallets</a><a href="/admin/support.html">Support Inbox</a><a href="/admin/admins.html">Admin Management</a></nav></aside><main class="main"><div class="top"><div><h1>System Readiness</h1><span class="muted">Configuration overview without exposing secrets.</span></div><div class="admin-top-actions"><a class="btn ghost" href="/admin/launch-check.html">Final Launch Check</a><button class="btn" id="refresh">Refresh</button></div></div>
+<section class="panel"><div class="readiness-grid" id="checks"></div></section>
+<section class="panel"><h2>Before a public real-money launch</h2><p class="muted">This page checks technical configuration only. Real-money custody, execution, KYC/AML, disclosures, licensing/authorization, data-provider rights, backups and incident procedures are separate launch requirements.</p></section>
+</main></div><script>
+const esc=s=>String(s??'').replace(/[&<>"]/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[m]));
+function card(name,ok,detail){return `<article class="readiness-card ${ok?'ready':'needs'}"><span>${ok?'READY':'CHECK'}</span><h3>${esc(name)}</h3><p>${esc(detail)}</p></article>`}
+async function load(){let r=await fetch('/api/super/readiness',{cache:'no-store'});if(r.status===401||r.status===403)return location='/login.html';let d=await r.json();let rpcReady=Object.values(d.rpc||{}).filter(Boolean).length;checks.innerHTML=[
+card('WalletConnect',d.walletConnect,d.walletConnect?'Project ID configured':'Add WALLETCONNECT_PROJECT_ID'),
+card('On-chain History',d.etherscanHistory,d.etherscanHistory?'Etherscan API V2 key configured':'Optional: add ETHERSCAN_API_KEY'),
+card('EVM Deposit Verification',rpcReady>0,`${rpcReady}/6 RPC endpoints configured`),
+card('Email API',d.email?.resendReady,d.email?.resendReady?'Resend sender/API ready':'Verify sender domain and configure Resend'),
+card('Login OTP',d.loginOtpRequired,'Password + email OTP required for every new login session'),
+card('Support Email',!!d.supportEmail,d.supportEmail||'Add SUPPORT_EMAIL before publishing'),
+card('SMTP Fallback',d.email?.smtpReady,d.email?.smtpReady?'SMTP configured':'Optional fallback not configured'),
+card('Telegram Alerts',d.telegramAdmins>0,`${d.telegramAdmins} admin alert configuration(s) enabled`),
+card('KYC Provider',d.kyc?.credentialsReady,`${d.kyc?.provider||'sumsub'} • ${d.kyc?.credentialsReady?'API credentials configured':'Add SUMSUB_APP_TOKEN / SUMSUB_SECRET_KEY'}`),
+card('KYC Webhook',d.kyc?.webhookReady,d.kyc?.webhookReady?'Webhook signature secret configured':'Add SUMSUB_WEBHOOK_SECRET'),
+card('Exchange Connector',d.exchange?.apiKeyReady&&d.exchange?.apiSecretReady,`${d.exchange?.provider||'kraken'} • ${d.exchange?.apiKeyReady&&d.exchange?.apiSecretReady?'credentials configured':'add exchange API credentials'}`),
+card('Exchange Execution',d.exchange?.executionMode==='validate'||(d.exchange?.executionMode==='live'&&!d.exchange?.emergencyStop),`Mode: ${d.exchange?.executionMode||'disabled'} • Emergency stop: ${d.exchange?.emergencyStop?'ON':'OFF'} • Max $${Number(d.exchange?.maxOrderUsd||0).toLocaleString()}`),
+card('Testing OTP Mode',!d.testingOtp,d.testingOtp?'Disable before launch':'Disabled'),
+card('Production Environment',d.environment==='production',`NODE_ENV=${d.environment}`),
+card('Reverse Proxy',d.trustProxy,d.trustProxy?'TRUST_PROXY enabled':'Enable only when deployed behind a trusted reverse proxy'),
+card('Database',d.databasePersistentPath,`${d.database} active • ${d.databasePersistentPath?'persistent path detected':'persistent hosted path not detected'}`)
+].join('')}
+refresh.onclick=load;load();
+</script><script src="/admin/admin-common.js"></script></body></html>

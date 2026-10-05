@@ -1,0 +1,32 @@
+<!doctype html><html><head><meta charset=utf-8><meta name=viewport content="width=device-width,initial-scale=1"><title>Activate Admin | OptiTrade</title><style>body{margin:0;background:#07101f;color:#fff;font:15px Segoe UI,Arial;display:grid;place-items:center;min-height:100vh}.box{width:min(480px,92vw);background:#0d1a2c;border:1px solid #29405f;border-radius:20px;padding:25px;box-sizing:border-box}h1{margin-top:0}input,button{width:100%;box-sizing:border-box;padding:13px;margin:7px 0;border-radius:11px}input{background:#081424;color:#fff;border:1px solid #2a4365}button{border:0;background:#2e73ff;color:#fff;font-weight:800;cursor:pointer}.muted{color:#8fa1b8}.err{color:#ff7284}</style></head><body><form class=box id=form><h1>Activate Admin Access</h1><p class=muted>Enter the one-time secret issued by the OptiTrade Super Admin. After activation, use your email/username and password for future logins.</p><input id=code required placeholder="One-time admin secret"><input id=name required placeholder="Full name"><input id=username required placeholder="Admin username"><input id=email type=email required placeholder="Email"><input id=password type=password required placeholder="Password (8+ chars, starts with capital)"><button>Activate Admin Account</button><p id=msg class=err></p></form><script>
+const $=id=>document.getElementById(id);
+function fail(text,field){
+  $('msg').style.color='#ff7284'; $('msg').textContent=text;
+  if(field){field.style.borderColor='#ff7284';field.focus();}
+}
+['code','name','username','email','password'].forEach(id=>{
+  $(id).addEventListener('input',()=>{$(id).style.borderColor='';$('msg').textContent='';});
+});
+$('form').addEventListener('submit',async e=>{
+  e.preventDefault();
+  const code=$('code').value.trim().toUpperCase();
+  const fullName=$('name').value.trim();
+  const username=$('username').value.trim().toLowerCase();
+  const email=$('email').value.trim().toLowerCase();
+  const password=$('password').value;
+  if(!code)return fail('Enter the one-time admin secret.',$('code'));
+  if(fullName.length<2)return fail('Enter the admin full name.',$('name'));
+  if(!/^[a-z0-9_]{3,20}$/.test(username))return fail('Username must be 3–20 characters using only a–z, 0–9 or _.',$('username'));
+  if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))return fail('Enter a valid email address.',$('email'));
+  if(password.length<8)return fail('Password must contain at least 8 characters.',$('password'));
+  if(!/^[A-Z]/.test(password))return fail('Password must start with a capital letter.',$('password'));
+  $('msg').style.color='#8fa1b8'; $('msg').textContent='Activating…';
+  try{
+    const r=await fetch('/api/admin/activate',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({code,name:fullName,username,email,password})});
+    const d=await r.json();
+    if(!r.ok)return fail(d.error||'Activation failed.');
+    $('msg').style.color='#5ce0a1'; $('msg').textContent='Admin activated successfully. Referral: '+d.referralCode;
+    setTimeout(()=>location='/admin/dashboard.html',1000);
+  }catch(err){fail('Could not reach OptiTrade. Make sure the server is running and try again.');}
+});
+</script></body></html>

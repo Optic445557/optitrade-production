@@ -1,0 +1,73 @@
+<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>KYC & Eligibility | OptiProTrade</title><link rel="stylesheet" href="/admin/admin-v2.css"></head><body><div class="shell"><aside class="side"><div class="brand">Opti<i>Trade</i></div><nav class="nav"><a href="/admin/dashboard.html">Overview</a><a href="/admin/users-v2.html">Users</a><a href="/admin/managed-trades.html">Trade Requests</a><a href="/admin/investment-plans.html">Investment Plans</a><a class="active" href="/admin/kyc.html">KYC & Eligibility</a><a href="/admin/exchange.html">Exchange Integration</a><a href="/admin/message-center.html">Message Center</a><a href="/admin/readiness.html">System Readiness</a><a href="/admin/support.html">Support Inbox</a></nav></aside><main class="main">
+<div class="top"><div><h1>KYC & Customer Eligibility</h1><span class="muted">Global identity verification, feature gates, country rules and manual account review.</span></div><button class="btn" id="savePolicy" hidden>Save Policy</button></div>
+
+<section class="panel"><div class="panel-head"><div><h2>Verification Provider & Feature Gates</h2><p class="muted">All enforcement controls are OFF by default unless you explicitly enable them.</p></div><span id="providerReady" class="status-chip">Loading…</span></div>
+<div class="kyc-admin-policy stage20-policy">
+<label>Provider<select id="provider"><option value="sumsub">Sumsub</option></select></label>
+<label>Verification level<input id="levelName" placeholder="basic-kyc-level"></label>
+<label class="switch-row"><input id="kycEnabled" type="checkbox"> KYC available to customers</label>
+<label class="switch-row"><input id="countryRulesEnabled" type="checkbox"> Enforce country eligibility rules</label>
+<label class="switch-row"><input id="requireSelf" type="checkbox"> Require KYC for Self-Directed Trading</label>
+<label class="switch-row"><input id="requireManaged" type="checkbox"> Require KYC for Trade with OptiTrade</label>
+<label class="switch-row"><input id="requireInvestment" type="checkbox"> Require KYC for Investment Plans</label>
+<label class="switch-row"><input id="requireTransfer" type="checkbox"> Require KYC for Internal Transfer</label>
+<label class="switch-row"><input id="requireWithdrawal" type="checkbox"> Require KYC for Withdrawal</label>
+</div>
+<div class="admin-secret-note">Deposit remains unchanged by these KYC feature gates. Provider secrets stay in the server environment and are never displayed in the browser.</div>
+</section>
+
+<section class="panel country-policy-panel" id="countryPanel" style="margin-top:16px">
+<div class="panel-head"><div><h2>Country Eligibility Rules</h2><p class="muted">No country is restricted automatically. Add only the rules you intentionally want to enforce.</p></div><button class="btn ghost" id="addCountryRule" hidden>Add Country Rule</button></div>
+<div id="countryRules" class="country-rule-list"><span class="muted">Loading…</span></div>
+<datalist id="countrySuggestions"></datalist>
+<div class="panel-actions" id="countrySaveWrap" hidden><button class="btn" id="saveCountries">Save Country Rules</button></div>
+</section>
+
+<section class="panel" style="margin-top:16px"><div class="panel-head"><div><h2>Customer Verification & Eligibility</h2><p class="muted">Sub-Admins can view and sync assigned customers. Only Super Admin changes global compliance status.</p></div><button class="btn ghost" id="refreshList">Refresh</button></div>
+<div class="kyc-admin-stats stage20-stats"><div><span>Not started</span><b id="sNot">0</b></div><div><span>In progress</span><b id="sProgress">0</b></div><div><span>Pending</span><b id="sPending">0</b></div><div><span>Verified</span><b id="sVerified">0</b></div><div><span>Needs attention</span><b id="sRejected">0</b></div><div><span>Manual review</span><b id="sReview">0</b></div><div><span>Restricted</span><b id="sRestricted">0</b></div></div>
+<div id="kycCustomers" class="kyc-customer-list stage20-customers"><span class="muted">Loading…</span></div></section>
+</main></div><div id="toast" class="toast"></div>
+
+<div id="eligibilityModal" class="admin-modal" hidden><div class="admin-modal-card"><button class="admin-modal-close" id="closeEligibilityModal">×</button><h2 id="eligibilityTitle">Customer Eligibility</h2><p class="muted" id="eligibilityMeta"></p><label>Status<select id="eligibilityStatus"><option value="clear">Clear</option><option value="manual_review">Manual Review</option><option value="restricted">Restricted</option></select></label><label>Customer-visible reason<textarea id="eligibilityReason" rows="4" maxlength="500" placeholder="Required for Manual Review or Restricted"></textarea></label><div class="modal-actions"><button class="btn" id="saveEligibility">Save Eligibility</button></div></div></div>
+
+<script>
+const esc=s=>String(s??'').replace(/[&<>\"]/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;'}[m]));
+let canManage=false,data=null,rules=[],selectedCustomer=null;
+function msg(s){toast.textContent=s;toast.style.display='block';setTimeout(()=>toast.style.display='none',2700)}
+function pretty(s){return String(s||'not_started').replaceAll('_',' ').replace(/\b\w/g,c=>c.toUpperCase())}
+function blankRule(){return {country:'',status:'allowed',reason:''}}
+function renderRules(){
+ if(!canManage){countryRules.innerHTML=(rules||[]).length?rules.map(r=>`<article class="country-rule-readonly"><b>${esc(r.country_label||r.country)}</b><span class="eligibility-chip ${esc(r.status)}">${esc(pretty(r.status))}</span><small>${esc(r.reason||'No additional reason')}</small></article>`).join(''):'<span class="muted">No country rules configured.</span>';return}
+ countryRules.innerHTML=(rules||[]).length?rules.map((r,i)=>`<article class="country-rule-row"><label>Country<input data-country="${i}" list="countrySuggestions" value="${esc(r.country||r.country_label||'')}" placeholder="Country name"></label><label>Status<select data-country-status="${i}"><option value="allowed" ${(r.status||'allowed')==='allowed'?'selected':''}>Allowed</option><option value="review" ${r.status==='review'?'selected':''}>Review</option><option value="restricted" ${r.status==='restricted'?'selected':''}>Restricted</option></select></label><label class="country-reason">Reason<input data-country-reason="${i}" value="${esc(r.reason||'')}" placeholder="Reason for review/restriction"></label><button class="btn danger compact" data-remove-country="${i}">×</button></article>`).join(''):'<span class="muted">No country rules configured. Customers are not restricted by country.</span>';
+ document.querySelectorAll('[data-country]').forEach(x=>x.oninput=()=>rules[+x.dataset.country].country=x.value);
+ document.querySelectorAll('[data-country-status]').forEach(x=>x.onchange=()=>rules[+x.dataset.countryStatus].status=x.value);
+ document.querySelectorAll('[data-country-reason]').forEach(x=>x.oninput=()=>rules[+x.dataset.countryReason].reason=x.value);
+ document.querySelectorAll('[data-remove-country]').forEach(x=>x.onclick=()=>{rules.splice(+x.dataset.removeCountry,1);renderRules()});
+}
+function countryRuleText(r){if(!r)return 'Default allowed';return `${pretty(r.status)}${r.reason?' • '+r.reason:''}`}
+function paint(){
+ const s=data.settings||{};provider.value=s.provider||'sumsub';levelName.value=s.level_name||'basic-kyc-level';kycEnabled.checked=!!s.enabled;countryRulesEnabled.checked=!!s.country_rules_enabled;
+ requireSelf.checked=!!s.require_self_trade;requireManaged.checked=!!s.require_managed_trade;requireInvestment.checked=!!s.require_investment;requireTransfer.checked=!!s.require_internal_transfer;requireWithdrawal.checked=!!s.require_withdrawal;
+ [provider,levelName,kycEnabled,countryRulesEnabled,requireSelf,requireManaged,requireInvestment,requireTransfer,requireWithdrawal].forEach(x=>x.disabled=!canManage);
+ savePolicy.hidden=!canManage;addCountryRule.hidden=!canManage;countrySaveWrap.hidden=!canManage;
+ providerReady.textContent=data.configured?(data.webhookReady?'Provider + webhook ready':'Provider ready • webhook check'):'Provider credentials required';providerReady.className='status-chip '+(data.configured&&data.webhookReady?'good':'warn');
+ rules=(data.countryRules||[]).map(x=>({id:x.id,country:x.country_label,status:x.status,reason:x.reason||''}));
+ countrySuggestions.innerHTML=(data.availableCountries||[]).map(x=>`<option value="${esc(x)}"></option>`).join('');renderRules();
+ const rows=data.customers||[],count=x=>rows.filter(r=>(r.status||'not_started')===x).length;
+ sNot.textContent=count('not_started');sProgress.textContent=count('in_progress')+count('on_hold');sPending.textContent=count('pending');sVerified.textContent=count('verified');sRejected.textContent=count('rejected');
+ sReview.textContent=rows.filter(r=>r.compliance_status==='manual_review'||r.country_rule?.status==='review').length;sRestricted.textContent=rows.filter(r=>r.compliance_status==='restricted'||r.country_rule?.status==='restricted').length;
+ kycCustomers.innerHTML=rows.length?rows.map(r=>`<article class="kyc-customer-row stage20-row"><div><b>${esc(r.name||r.username||'Customer')}</b><span>${esc(r.username?'@'+r.username:r.email)} • ${esc(r.country||'Country not set')}</span><small>Country eligibility: ${esc(countryRuleText(r.country_rule))}</small></div><div><span>KYC</span><b class="kyc-status ${esc(r.status)}">${esc(pretty(r.status))}</b></div><div><span>Account eligibility</span><b class="eligibility-chip ${esc(r.compliance_status||'clear')}">${esc(pretty(r.compliance_status||'clear'))}</b><small>${esc(r.compliance_reason||'No account hold')}</small></div><div><span>Last sync</span><b>${r.last_synced_at?new Date(String(r.last_synced_at).replace(' ','T')+'Z').toLocaleString():'—'}</b>${r.last_error?`<small class="bad-text">${esc(r.last_error)}</small>`:''}</div><div class="kyc-row-actions"><button class="btn ghost compact" data-sync="${r.id}" ${data.configured?'':'disabled'}>Sync KYC</button>${canManage?`<button class="btn compact" data-eligibility="${r.id}">Eligibility</button>`:''}</div></article>`).join(''):'<span class="muted">No customers found.</span>';
+ document.querySelectorAll('[data-sync]').forEach(b=>b.onclick=()=>syncUser(b.dataset.sync,b));
+ document.querySelectorAll('[data-eligibility]').forEach(b=>b.onclick=()=>openEligibility(+b.dataset.eligibility));
+}
+async function load(){const r=await fetch('/api/admin/kyc',{cache:'no-store'});if(r.status===401||r.status===403)return location='/login.html';data=await r.json();canManage=!!data.canManage;paint()}
+async function syncUser(id,b){b.disabled=true;try{const r=await fetch('/api/admin/kyc/'+id+'/sync',{method:'POST'}),d=await r.json();if(!r.ok)return msg(d.error||'Sync failed.');msg('Verification status synced.');await load()}finally{b.disabled=false}}
+function openEligibility(id){selectedCustomer=(data.customers||[]).find(x=>Number(x.id)===Number(id));if(!selectedCustomer)return;eligibilityTitle.textContent='Eligibility • '+(selectedCustomer.name||selectedCustomer.username||'Customer');eligibilityMeta.textContent=`${selectedCustomer.country||'Country not set'} • KYC ${pretty(selectedCustomer.status)}`;eligibilityStatus.value=selectedCustomer.compliance_status||'clear';eligibilityReason.value=selectedCustomer.compliance_reason||'';eligibilityModal.hidden=false}
+closeEligibilityModal.onclick=()=>eligibilityModal.hidden=true;eligibilityModal.onclick=e=>{if(e.target===eligibilityModal)eligibilityModal.hidden=true};
+saveEligibility.onclick=async()=>{if(!selectedCustomer)return;const body={status:eligibilityStatus.value,reason:eligibilityReason.value.trim()};const r=await fetch('/api/super/compliance/customer/'+selectedCustomer.id,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)}),d=await r.json();if(!r.ok)return msg(d.error||'Could not save eligibility.');eligibilityModal.hidden=true;msg('Customer eligibility saved.');await load()};
+addCountryRule.onclick=()=>{rules.push(blankRule());renderRules();setTimeout(()=>document.querySelector('[data-country="'+(rules.length-1)+'"]')?.focus(),50)};
+saveCountries.onclick=async()=>{const body={rules:rules.map(r=>({country:r.country||r.country_label,status:r.status,reason:r.reason||''}))};const r=await fetch('/api/super/compliance/countries',{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)}),d=await r.json();if(!r.ok)return msg(d.error||'Could not save country rules.');msg('Country eligibility rules saved.');await load()};
+refreshList.onclick=load;
+savePolicy.onclick=async()=>{const body={provider:provider.value,levelName:levelName.value.trim(),enabled:kycEnabled.checked,countryRulesEnabled:countryRulesEnabled.checked,requireSelfTrade:requireSelf.checked,requireManagedTrade:requireManaged.checked,requireInvestment:requireInvestment.checked,requireInternalTransfer:requireTransfer.checked,requireWithdrawal:requireWithdrawal.checked};const r=await fetch('/api/super/kyc/settings',{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)}),d=await r.json();if(!r.ok)return msg(d.error||'Could not save policy.');msg('KYC and eligibility policy saved.');await load()};
+load();
+</script><script src="/admin/admin-common.js"></script></body></html>

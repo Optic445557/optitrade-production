@@ -1,0 +1,172 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Deposit | OptiTrade</title><link rel="stylesheet" href="/css/pages.css"></head><body>
+<header class="top"><a class="logo" href="/dashboard.html">↗ Opti<i>Trade</i></a><div class="top-right"><span class="status-pill">CRYPTO DEPOSIT</span><a class="pill" href="/profile.html" data-user-name>Account</a><button class="icon" data-logout>↪</button></div></header>
+<main class="shell"><a class="back" href="/dashboard.html">← Back to dashboard</a>
+<section class="hero"><div><div class="eyebrow">WALLET & FUNDS</div><h1>Deposit Funds</h1><p>Choose a receiving wallet, enter the USD amount you want credited, then send the displayed crypto equivalent.</p></div></section>
+
+<section class="deposit-stepper"><article class="active"><span>1</span><div><b>Choose Wallet</b><small>Asset + network</small></div></article><i></i><article><span>2</span><div><b>Enter USD Amount</b><small>Crypto equivalent shown</small></div></article><i></i><article><span>3</span><div><b>Send</b><small>Wait for confirmation</small></div></article></section>
+
+<div class="grid"><section class="card span7"><div class="row"><div><h2>Choose Receiving Wallet</h2><p class="muted">Select the crypto asset and network you will use to fund your account.</p></div><span class="status-pill">STEP 1</span></div>
+<div class="stack" style="margin-top:18px"><div class="field"><label>Asset</label><select id="asset"></select></div><div class="field"><label>Network</label><select id="network"></select></div><button class="btn primary" id="nextDeposit">Continue →</button></div></section>
+<section class="card span5"><h3>How the amount works</h3><div class="stack"><div class="notice">Enter the <b>USD amount you want credited</b>. Example: entering <b>$1,000</b> means a $1,000 account-credit — not 1,000 BTC.</div><div class="notice green"></div></div></section></div>
+
+<section class="card" style="margin-top:18px"><div class="section-head"><div><h2>Deposit Receipts</h2><p class="muted">Track every payment you marked as sent and open its receipt at any time.</p></div><button class="btn" id="refreshHistory">Refresh</button></div><div id="history" class="deposit-history"></div></section>
+</main>
+
+<div id="depositModal" class="deposit-modal" hidden><div class="deposit-modal-card"><button id="closeDepositModal" class="deposit-modal-close">×</button>
+<div class="deposit-modal-head"><div><span class="status-pill">STEP 2</span><h2 id="selectedTitle">Send Payment</h2><p id="selectedNetwork" class="muted"></p></div></div>
+<div class="deposit-wallet-picker" id="walletPickerWrap" hidden><label>Receiving wallet<select id="walletChoice"></select></label></div>
+<div class="field"><label>USD amount to deposit</label><div class="deposit-usd-input"><span>$</span><input id="usdAmount" type="number" min="1" step="0.01" placeholder="1000.00"></div><small class="muted"></small></div>
+<div class="deposit-send-summary"><div><span>Amount crediting</span><strong id="usdEstimate">$0.00</strong></div><div><span>Crypto amount to send</span><strong id="sendingAmount">Enter USD amount</strong></div></div>
+<div class="qr-address-grid"><div class="qr-panel"><img id="walletQr" alt="Receiving wallet QR code"><small>Scan with your wallet app.</small></div><div class="address-panel"><span>Send only <b id="addressAsset">crypto</b> on <b id="addressNetwork">this network</b> to:</span><code id="address">—</code><button class="btn" id="copyAddress" type="button">Copy Address</button></div></div>
+<div class="stack"><div class="usd-estimate"><span>Reference conversion</span><small id="rateText">Enter the USD amount to calculate the crypto amount.</small></div><div class="field"><label>Transaction hash / TXID <span class="optional">(recommended)</span></label><input id="txid" maxlength="180" placeholder="Paste transaction hash if available"></div><div class="field"><label>Note <span class="optional">(optional)</span></label><input id="depositNote" maxlength="300" placeholder="Optional payment note"></div>
+<div class="deposit-confirm-box"><b></p></div>
+<button class="btn primary deposit-sent-btn" id="submitDeposit">Payment sent</button></div></div></div>
+
+<div id="receiptSuccess" class="deposit-modal" hidden><div class="deposit-modal-card receipt-success-card"><div class="receipt-success-icon">✓</div><span class="status-pill">RECEIPT CREATED</span><h2>Payment marked as sent</h2><p>Your deposit is now waiting for administrator review.</p><div class="receipt-success-ref"><span>Receipt reference</span><b id="successReference">—</b></div><div class="receipt-success-actions"><a class="btn primary" id="viewReceipt" href="#">View Receipt</a><button class="btn" id="closeReceiptSuccess">Back to Deposits</button></div></div></div>
+
+<nav class="bottom"><a href="/dashboard.html"><span>▦</span> Home</a><a href="/deposit.html"><span>⊕</span> Deposit</a><a href="/trade.html"><span>↗</span> Trade</a><a href="/profile.html"><span>♙</span> Profile</a><a href="/support.html"><span>◉</span> Support</a></nav><div id="toast" class="toast"></div>
+<script src="/js/pages.js"></script><script>
+(async()=>{
+ if(!await auth())return;
+ const $=s=>document.querySelector(s),esc=s=>String(s??'').replace(/[&<>\"]/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[m]));
+ let wallets=[],selectedWallet=null,quoteTimer=0,lastQuote=null,quoteTicket=0,depositSubmissionId='';
+ const newSubmissionId=()=>window.crypto?.randomUUID?window.crypto.randomUUID():('dep-'+Date.now().toString(36)+'-'+Math.random().toString(36).slice(2,12));
+ const resetSubmissionId=()=>{depositSubmissionId=''};
+ const A=$('#asset'),N=$('#network'),W=$('#walletChoice'),historyEl=$('#history'),submitBtn=$('#submitDeposit');
+ async function timedFetch(url,options={},timeoutMs=15000){
+   const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),timeoutMs);
+   try{return await fetch(url,{...options,signal:controller.signal})}
+   catch(e){if(e?.name==='AbortError')throw new Error('The request took too long. Please try again.');throw e}
+   finally{clearTimeout(timer)}
+ }
+ const defaultSending='Enter USD amount';
+ const defaultRate='Enter the USD amount to calculate the crypto amount.';
+ const setQuoteIdle=()=>{$('#sendingAmount').textContent=defaultSending;$('#rateText').textContent=defaultRate;};
+ function loadAssetOptions(){
+   const assets=[...new Set(wallets.map(x=>x.asset))];
+   A.innerHTML=assets.map(x=>`<option value="${esc(x)}">${x==='BTC'?'Bitcoin (BTC)':x==='ETH'?'Ethereum (ETH)':'Tether (USDT)'}</option>`).join('');
+   loadNetworkOptions();
+ }
+ function loadNetworkOptions(){
+   const nets=[...new Set(wallets.filter(x=>x.asset===A.value).map(x=>x.network))];
+   N.innerHTML=nets.map(x=>`<option value="${esc(x)}">${esc(x)}</option>`).join('');
+ }
+ function modalWallets(){return wallets.filter(x=>x.asset===A.value&&x.network===N.value)}
+ function showWallet(w){
+   selectedWallet=w||null;
+   $('#address').textContent=w?.address||'—';
+   $('#walletQr').src=w?`/api/deposit/qr?walletId=${encodeURIComponent(w.id)}&v=${Date.now()}`:'';
+   $('#selectedTitle').textContent=`Fund with ${A.value}`;
+   $('#selectedNetwork').textContent=N.value+(w?.label?' • '+w.label:'');
+   $('#addressAsset').textContent=A.value||'crypto';
+   $('#addressNetwork').textContent=N.value||'this network';
+   scheduleQuote(true);
+ }
+ async function fetchQuoteNow(){
+   const usd=Number($('#usdAmount').value);
+   lastQuote=null;
+   $('#usdEstimate').textContent=usd>0?'$'+usd.toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2}):'$0.00';
+   if(!(usd>0)||!A.value){setQuoteIdle();return null;}
+   const ticket=++quoteTicket;
+   $('#sendingAmount').textContent='Calculating…';
+   $('#rateText').textContent='Getting the latest reference conversion…';
+   try{
+     const r=await timedFetch(`/api/deposit/quote?asset=${encodeURIComponent(A.value)}&usd=${encodeURIComponent(usd)}`,{cache:'no-store'},10000);
+     const d=await r.json().catch(()=>({}));
+     if(ticket!==quoteTicket)return null;
+     if(!r.ok)throw new Error(d.error||'Reference conversion unavailable.');
+     lastQuote=d;
+     $('#sendingAmount').textContent=`${Number(d.cryptoAmount).toLocaleString(undefined,{maximumFractionDigits:10})} ${A.value}`;
+     $('#rateText').textContent=`Reference rate: 1 ${A.value} ≈ $${Number(d.usdRate).toLocaleString(undefined,{maximumFractionDigits:2})}. Send the displayed crypto amount for a $${usd.toFixed(2)} credit request.`;
+     return d;
+   }catch(e){
+     if(ticket===quoteTicket){
+       $('#sendingAmount').textContent='Reference unavailable';
+       $('#rateText').textContent=e.message||'Could not calculate crypto amount.';
+     }
+     throw e;
+   }
+ }
+ function scheduleQuote(immediate=false){
+   clearTimeout(quoteTimer);
+   if(immediate){fetchQuoteNow().catch(()=>{});return;}
+   quoteTimer=setTimeout(()=>fetchQuoteNow().catch(()=>{}),250);
+ }
+ $('#nextDeposit').onclick=()=>{
+   const rows=modalWallets();
+   if(!rows.length)return toast('No receiving address is available for that asset/network.');
+   W.innerHTML=rows.map(x=>`<option value="${x.id}">${esc(x.label||x.asset+' '+x.network)} • ${esc(x.address.slice(0,8))}…${esc(x.address.slice(-6))}</option>`).join('');
+   $('#walletPickerWrap').hidden=rows.length<2;
+   showWallet(rows[0]);
+   $('#depositModal').hidden=false;
+ };
+ W.onchange=()=>{resetSubmissionId();showWallet(wallets.find(x=>String(x.id)===String(W.value)))};
+ A.onchange=()=>{resetSubmissionId();loadNetworkOptions();selectedWallet=null;lastQuote=null;scheduleQuote(true)};
+ N.onchange=()=>{resetSubmissionId();selectedWallet=null;lastQuote=null;const rows=modalWallets();if(rows.length){W.innerHTML=rows.map(x=>`<option value="${x.id}">${esc(x.label||x.asset+' '+x.network)} • ${esc(x.address.slice(0,8))}…${esc(x.address.slice(-6))}</option>`).join('');showWallet(rows[0])}else setQuoteIdle()};
+ $('#closeDepositModal').onclick=()=>$('#depositModal').hidden=true;
+ $('#depositModal').onclick=e=>{if(e.target===$('#depositModal'))$('#depositModal').hidden=true};
+ $('#copyAddress').onclick=async()=>{if(!selectedWallet)return;await navigator.clipboard.writeText(selectedWallet.address);toast('Receiving address copied.')};
+ $('#usdAmount').oninput=()=>{resetSubmissionId();scheduleQuote(false)};
+ $('#txid').oninput=resetSubmissionId;
+ $('#depositNote').oninput=resetSubmissionId;
+ function statusLabel(x){return x.status==='approved'?'Approved & Credited':x.status==='rejected'?'Declined':'Pending Review'}
+ async function hist(){
+   let r=await fetch('/api/deposits',{cache:'no-store'}),d=await r.json();
+   historyEl.innerHTML=d.deposits.length?d.deposits.map(x=>{
+     const requested=x.requested_usd!=null?Number(x.requested_usd):Number(x.usd_value||0);
+     return `<article class="deposit-history-card"><div><b>${statusLabel(x)}</b><small>${esc(x.reference)} • ${new Date(String(x.payment_marked_sent_at||x.created_at).replace(' ','T')+'Z').toLocaleString()}</small></div><div class="deposit-credit-line"><span>${x.amount_input_mode==='usd'?'Requested deposit':'Recorded deposit value'}</span><b>${requested?('$'+requested.toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2})):'Pending'}</b></div><div class="deposit-crypto-line"><span>${Number(x.amount).toLocaleString(undefined,{maximumFractionDigits:10})} ${esc(x.asset)}</span><small>${esc(x.network)}${x.amount_input_mode==='crypto_legacy'?' • legacy crypto-entry record':''}</small></div><div class="deposit-credit-line"><span>${x.status==='approved'&&x.credited_usd!=null?'Actual credited USD':'Account credit'}</span><b>${x.status==='approved'&&x.credited_usd!=null?('$'+Number(x.credited_usd).toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2})):'Pending review'}</b></div>${x.credit_correction_reason?`<p>Credit correction: ${esc(x.credit_correction_reason)}</p>`:''}${x.review_reason?`<p>Review: ${esc(x.review_reason)}</p>`:''}<div class="deposit-history-actions"><a class="btn" href="/deposit-receipt.html?id=${x.id}">View Receipt</a></div></article>`;
+   }).join(''):'<div class="empty-state">No deposit receipts yet.</div>';
+ }
+ let r=await fetch('/api/deposit/options',{cache:'no-store'}),d=await r.json();
+ wallets=d.wallets||[];
+ if(!wallets.length){
+   A.innerHTML='<option>No receiving wallet available</option>';
+   N.innerHTML='<option>—</option>';
+   $('#nextDeposit').disabled=true;
+ }else loadAssetOptions();
+
+ submitBtn.onclick=async()=>{
+   const usd=Number($('#usdAmount').value);
+   if(!selectedWallet||!(usd>0))return toast('Enter the USD amount you want credited.');
+   let quote=lastQuote;
+   submitBtn.disabled=true;
+   submitBtn.textContent='Preparing…';
+   try{
+     if(!quote||!quote.quoteToken||Math.abs(Number(quote.usdValue)-usd)>0.01||Number(quote.quoteExpiresAt||0)<Date.now()+15000){
+       try{quote=await fetchQuoteNow();}catch(e){toast(e.message||'Could not calculate the crypto amount.');return;}
+     }
+     const crypto=Number(quote?.cryptoAmount);
+     if(!(crypto>0))return toast('Crypto amount is unavailable.');
+     const confirmed=await appConfirm(`You are requesting a $${usd.toFixed(2)} account credit. Have you sent approximately ${crypto.toLocaleString(undefined,{maximumFractionDigits:10})} ${A.value} on ${N.value}?`,{title:'Confirm payment sent',confirmText:"I've Sent Payment"});
+     if(!confirmed)return;
+     submitBtn.textContent='Submitting…';
+     if(!depositSubmissionId)depositSubmissionId=newSubmissionId();
+     let rr=await timedFetch('/api/deposits',{method:'POST',headers:{'Content-Type':'application/json'},cache:'no-store',body:JSON.stringify({walletId:selectedWallet.id,asset:A.value,network:N.value,requestedUsd:usd,quoteToken:quote.quoteToken||'',clientRequestId:depositSubmissionId,txid:$('#txid').value,note:$('#depositNote').value})},8000);
+     let dd=await rr.json().catch(()=>({}));
+     if(!rr.ok)return toast(dd.error||'Could not submit deposit.');
+     $('#depositModal').hidden=true;
+     $('#successReference').textContent=dd.reference;
+     $('#viewReceipt').href=dd.receiptHref||(`/deposit-receipt.html?id=${dd.id}`);
+     $('#receiptSuccess').hidden=false;
+     resetSubmissionId();
+     $('#usdAmount').value='';
+     $('#txid').value='';
+     $('#depositNote').value='';
+     $('#usdEstimate').textContent='$0.00';
+     setQuoteIdle();
+     lastQuote=null;
+     toast('Deposit receipt created successfully.');
+     hist();
+   }catch(e){
+     toast(e.message||'Could not submit deposit.');
+   }finally{
+     submitBtn.disabled=false;
+     submitBtn.textContent="✓ I've Sent Payment";
+   }
+ };
+ $('#closeReceiptSuccess').onclick=()=>$('#receiptSuccess').hidden=true;
+ $('#receiptSuccess').onclick=e=>{if(e.target===$('#receiptSuccess'))$('#receiptSuccess').hidden=true};
+ $('#refreshHistory').onclick=hist;
+ hist();
+})();
+</script><script src="/js/account-support.js"></script><script src="/js/notifications.js"></script><script src="/js/i18n.js"></script></body></html>

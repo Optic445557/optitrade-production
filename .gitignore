@@ -1,0 +1,29 @@
+# Dependencies
+node_modules/
+
+# Local secrets
+.env
+.env.*
+!.env.example
+!.env.render.example
+
+# Local SQLite / test data
+database/
+*.db
+*.db-wal
+*.db-shm
+*.sqlite
+*.sqlite3
+
+# Backups and logs
+backups/
+*.log
+npm-debug.log*
+
+# Local OS / editor files
+.DS_Store
+Thumbs.db
+.vscode/
+
+# Do not commit downloadable build archives
+*.zip

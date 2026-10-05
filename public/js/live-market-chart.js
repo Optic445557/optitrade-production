@@ -1,0 +1,36 @@
+(()=>{
+const canvas=document.getElementById('marketChart');if(!canvas)return;
+const ctx=canvas.getContext('2d'),$=id=>document.getElementById(id);
+const priceEl=$('chartPrice'),changeEl=$('chartChange'),highEl=$('chartHigh'),lowEl=$('chartLow'),pairEl=$('chartPair'),rangeLabel=$('chartRangeLabel'),loading=$('chartLoading'),startEl=$('chartStart'),endEl=$('chartEnd'),tooltip=$('chartTooltip'),symbolsEl=$('chartSymbols');
+const defs={
+ crypto:[{key:'BTC',label:'₿ BTC/USDT',id:'bitcoin'},{key:'ETH',label:'◆ ETH/USDT',id:'ethereum'}],
+ forex:[{key:'EURUSD',label:'€ EUR/USD',from:'EUR',to:'USD'},{key:'GBPUSD',label:'£ GBP/USD',from:'GBP',to:'USD'},{key:'USDJPY',label:'¥ USD/JPY',from:'USD',to:'JPY'}]
+};
+let type='crypto',symbol='BTC',days=7,points=[],raf=0,lastLoad=0;
+const money=n=>'$'+Number(n||0).toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:n>=1000?2:4});
+const fx=n=>Number(n||0).toLocaleString(undefined,{minimumFractionDigits:3,maximumFractionDigits:5});
+function size(){const r=canvas.parentElement.getBoundingClientRect(),d=Math.min(devicePixelRatio||1,2);canvas.width=Math.max(320,Math.floor(r.width*d));canvas.height=Math.max(240,Math.floor(r.height*d));canvas.style.width=r.width+'px';canvas.style.height=r.height+'px';ctx.setTransform(d,0,0,d,0,0)}
+function compactTime(t){const d=new Date(t);return days===1&&type==='crypto'?d.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}):d.toLocaleDateString([],{month:'short',day:'numeric'})}
+function displayPrice(v){return type==='crypto'?money(v):fx(v)}
+function draw(){cancelAnimationFrame(raf);raf=requestAnimationFrame(()=>{size();const w=canvas.clientWidth,h=canvas.clientHeight,p={l:16,r:16,t:18,b:22};ctx.clearRect(0,0,w,h);if(points.length<2)return;let vals=points.map(x=>x[1]),min=Math.min(...vals),max=Math.max(...vals),span=Math.max(max-min,Math.abs(max)*.001),lo=min-span*.12,hi=max+span*.12;const x=i=>p.l+(i/(points.length-1))*(w-p.l-p.r),y=v=>p.t+(1-(v-lo)/(hi-lo))*(h-p.t-p.b);ctx.lineWidth=1;ctx.strokeStyle='rgba(121,151,187,.13)';for(let i=0;i<5;i++){let yy=p.t+i*(h-p.t-p.b)/4;ctx.beginPath();ctx.moveTo(p.l,yy);ctx.lineTo(w-p.r,yy);ctx.stroke()}const grad=ctx.createLinearGradient(0,p.t,0,h-p.b);grad.addColorStop(0,'rgba(30,204,255,.24)');grad.addColorStop(1,'rgba(30,204,255,0)');ctx.beginPath();points.forEach((q,i)=>i?ctx.lineTo(x(i),y(q[1])):ctx.moveTo(x(i),y(q[1])));ctx.lineTo(w-p.r,h-p.b);ctx.lineTo(p.l,h-p.b);ctx.closePath();ctx.fillStyle=grad;ctx.fill();ctx.beginPath();points.forEach((q,i)=>i?ctx.lineTo(x(i),y(q[1])):ctx.moveTo(x(i),y(q[1])));ctx.lineWidth=2.3;ctx.strokeStyle='#21c9f5';ctx.shadowColor='rgba(33,201,245,.45)';ctx.shadowBlur=8;ctx.stroke();ctx.shadowBlur=0;let last=points.at(-1);ctx.beginPath();ctx.arc(x(points.length-1),y(last[1]),4,0,Math.PI*2);ctx.fillStyle='#46dcff';ctx.fill()})}
+function summary(){if(!points.length)return;const first=points[0][1],last=points.at(-1)[1],vals=points.map(x=>x[1]),pct=((last-first)/first)*100;pairEl.textContent=type==='crypto'?symbol+'/USDT':symbol.replace(/([A-Z]{3})([A-Z]{3})/,'$1/$2');priceEl.textContent=displayPrice(last);highEl.textContent=displayPrice(Math.max(...vals));lowEl.textContent=displayPrice(Math.min(...vals));changeEl.textContent=(pct>=0?'+':'')+pct.toFixed(2)+'%';changeEl.classList.toggle('down',pct<0);rangeLabel.textContent=days===1?'24H':days+'D';startEl.textContent=compactTime(points[0][0]);endEl.textContent=compactTime(points.at(-1)[0])}
+function sample(raw,max=180){if(raw.length<=max)return raw;let step=Math.ceil(raw.length/max),out=[];for(let i=0;i<raw.length;i+=step)out.push(raw[i]);if(out.at(-1)!==raw.at(-1))out.push(raw.at(-1));return out}
+function isoDate(d){return d.toISOString().slice(0,10)}
+async function loadCrypto(def){const r=await fetch(`https://api.coingecko.com/api/v3/coins/${def.id}/market_chart?vs_currency=usd&days=${days}`,{headers:{accept:'application/json'}});if(!r.ok)throw new Error('Crypto history unavailable');let d=await r.json();return sample((d.prices||[]).filter(x=>Array.isArray(x)&&Number.isFinite(x[1])))}
+async function loadForex(def){
+ const end=new Date(),start=new Date(end.getTime()-Math.max(days,7)*86400000);
+ // Frankfurter publishes reference rates on available business days, not tick-by-tick quotes.
+ const urls=[
+  `https://api.frankfurter.app/${isoDate(start)}..${isoDate(end)}?from=${def.from}&to=${def.to}`,
+  `https://api.frankfurter.dev/v1/${isoDate(start)}..${isoDate(end)}?base=${def.from}&symbols=${def.to}`
+ ];
+ for(const url of urls){try{const r=await fetch(url);if(!r.ok)continue;const d=await r.json();let rates=d.rates||{};let out=Object.entries(rates).map(([date,v])=>[new Date(date+'T12:00:00Z').getTime(),Number(v?.[def.to])]).filter(x=>Number.isFinite(x[1]));if(out.length>=2){if(days===1)out=out.slice(-2);else if(days===7)out=out.slice(-7);else out=out.slice(-30);return out}}catch{}}
+ throw new Error('FX reference history unavailable');
+}
+function renderSymbols(){symbolsEl.innerHTML=defs[type].map((d,i)=>`<button class="${d.key===symbol?'active':''}" data-chart-symbol="${d.key}" type="button">${d.label}</button>`).join('');symbolsEl.querySelectorAll('[data-chart-symbol]').forEach(b=>b.onclick=()=>{symbol=b.dataset.chartSymbol;renderSymbols();load()})}
+async function load(){loading.hidden=false;loading.textContent=type==='forex'?'Loading FX reference history…':'Loading market history…';try{const def=defs[type].find(x=>x.key===symbol)||defs[type][0];points=type==='crypto'?await loadCrypto(def):await loadForex(def);if(points.length<2)throw new Error('Not enough history');summary();draw();loading.hidden=true;lastLoad=Date.now()}catch(e){loading.hidden=false;loading.textContent=type==='forex'?'FX reference history is temporarily unavailable. It will retry automatically.':'Chart data is temporarily unavailable. It will retry automatically.'}}
+document.querySelectorAll('[data-market-type]').forEach(b=>b.onclick=()=>{type=b.dataset.marketType;symbol=defs[type][0].key;document.querySelectorAll('[data-market-type]').forEach(x=>x.classList.toggle('active',x===b));renderSymbols();load()});
+document.querySelectorAll('[data-chart-range]').forEach(b=>b.onclick=()=>{days=+b.dataset.chartRange;document.querySelectorAll('[data-chart-range]').forEach(x=>x.classList.toggle('active',x===b));load()});
+canvas.addEventListener('mousemove',e=>{if(!points.length)return;let r=canvas.getBoundingClientRect(),ratio=(e.clientX-r.left)/r.width,i=Math.max(0,Math.min(points.length-1,Math.round(ratio*(points.length-1)))),p=points[i];tooltip.hidden=false;tooltip.innerHTML=`<b>${displayPrice(p[1])}</b><small>${new Date(p[0]).toLocaleString()}</small>`;tooltip.style.left=Math.min(r.width-145,Math.max(6,e.clientX-r.left+10))+'px';tooltip.style.top=Math.max(6,e.clientY-r.top-54)+'px'});
+canvas.addEventListener('mouseleave',()=>tooltip.hidden=true);window.addEventListener('resize',draw);document.addEventListener('visibilitychange',()=>{if(!document.hidden&&Date.now()-lastLoad>300000)load()});setInterval(()=>{if(!document.hidden)load()},300000);renderSymbols();load();
+})();

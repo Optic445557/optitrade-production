@@ -1,0 +1,51 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Investment Plans | OptiProTrade</title><link rel="stylesheet" href="/css/pages.css"></head><body>
+<header class="top"><a class="logo" href="/dashboard.html">↗ Opti<i>Trade</i></a><div class="top-right"><a class="pill" href="/markets.html">● Markets</a><a class="pill" href="/profile.html" data-user-name>Account</a><button class="icon" data-logout title="Logout">↪</button></div></header>
+<main class="shell"><a class="back" href="/dashboard.html">← Back to dashboard</a>
+<section class="hero"><div><div class="eyebrow">MANAGED STRATEGIES</div><h1>Investment Plans</h1><p>Choose a strategy, track active investments and review your plan history.</p></div></section>
+
+<section class="card" id="investmentBalanceCard">
+  <div class="section-head"><div><div class="eyebrow">PLAN FUNDING</div><h2>Available Balance</h2><p class="muted">New investment requests are reserved from this USD balance immediately.</p></div><a class="btn" href="/deposit.html">Add Funds</a></div>
+  <div class="plan-card-stats" style="margin-top:14px">
+    <div><span>Available to invest</span><b id="investAvailableUsd">Loading…</b></div>
+    <div><span>Reserved in investments</span><b id="investReservedUsd">Loading…</b></div>
+  </div>
+</section>
+
+<section class="card active-investments-card">
+  <div class="section-head"><div><div class="eyebrow">YOUR INVESTMENTS</div><h2>Active Investments</h2><p class="muted">Approved plans, progress and latest performance updates.</p></div><span class="pill-soft">14 DAYS+</span></div>
+  <div id="activeInvestments" class="active-investment-grid"><div class="muted">Loading active investments…</div></div>
+</section>
+
+<section class="investment-plan-hero"><div><span class="eyebrow">AVAILABLE STRATEGIES</span><h2>Choose a strategy that matches your objective.</h2><p>Each plan has its own minimum allocation, market focus, risk level and available periods. Target ranges, when configured, are estimates rather than guaranteed outcomes.</p></div><a class="btn" href="/support.html">Ask Help Center</a></section>
+<div id="planGrid" class="investment-plan-grid"><div class="card"><span class="muted">Loading investment plans…</span></div></div>
+
+<section class="card plan-request-history"><div class="section-head"><div><h2>Plan Requests & History</h2><p class="muted">Pending, rejected, cancelled and settled investment records.</p></div></div><div id="requestList" class="investment-request-history"><div class="muted">Loading…</div></div></section>
+</main>
+<nav class="bottom"><a href="/dashboard.html"><span>▦</span> Home</a><a href="/deposit.html"><span>⊕</span> Deposit</a><a href="/trade.html"><span>↗</span> Trade</a><a href="/profile.html"><span>♙</span> Profile</a><a href="/support.html"><span>◉</span> Support</a></nav><div id="toast" class="toast"></div>
+<script src="/js/pages.js"></script><script>
+const esc=s=>String(s??'').replace(/[&<>\"]/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;'}[m]));
+const fmtAsset=(v,a)=>a==='USDT'?Number(v||0).toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:6}):Number(v||0).toLocaleString(undefined,{maximumFractionDigits:10});
+function targetText(terms){const configured=(terms||[]).filter(t=>t.target_min_pct!=null||t.target_max_pct!=null);if(!configured.length)return 'Terms available';const lo=Math.min(...configured.map(t=>Number(t.target_min_pct??t.target_max_pct??0))),hi=Math.max(...configured.map(t=>Number(t.target_max_pct??t.target_min_pct??0)));return `${lo}% – ${hi}% target range`}
+function resultText(x){if(x.current_result_pct==null)return 'Awaiting update';return `${Number(x.current_result_pct)>=0?'+':''}${Number(x.current_result_pct).toLocaleString(undefined,{maximumFractionDigits:2})}%`}
+async function loadInvestmentBalance(){
+ try{
+   const [wr,mr]=await Promise.all([
+     fetch('/api/withdrawal/status',{cache:'no-store'}),
+     fetch('/api/me',{cache:'no-store'})
+   ]);
+   const w=await wr.json(),m=await mr.json();
+   const usd=(w.assets||[]).find(x=>x.asset==='USD')||{};
+   const inv=(m.sectionBalances||[]).find(x=>x.section==='investment'&&x.asset==='USD')||{};
+   investAvailableUsd.textContent=money(Number(usd.available||0));
+   investReservedUsd.textContent=money(Number(inv.amount||0));
+ }catch{
+   investAvailableUsd.textContent='—';
+   investReservedUsd.textContent='—';
+ }
+}
+async function loadPlans(){try{const r=await fetch('/api/investment-plans',{cache:'no-store'}),d=await r.json();if(!r.ok)throw new Error(d.error||'Could not load plans');planGrid.innerHTML=d.plans?.length?d.plans.map((p,i)=>`<article class="investment-plan-card"><div class="plan-card-top"><span class="plan-number">0${i+1}</span><span class="plan-risk">${esc(p.risk_level)}</span></div><h2>${esc(p.name)}</h2><p>${esc(p.subtitle||p.description)}</p><div class="plan-focus">${esc(p.market_focus)}</div><div class="plan-card-stats"><div><span>Minimum</span><b>${money(p.min_usd)}</b></div><div><span>Periods</span><b>${(p.terms||[]).map(t=>t.duration_days+'d').join(' • ')}</b></div><div><span>Target</span><b>${targetText(p.terms)}</b></div></div><a class="btn primary plan-view-btn" href="/investment-plan.html?id=${p.id}">View Plan →</a></article>`).join(''):'<div class="card"><span class="muted">No investment plans are currently active.</span></div>'}catch(e){planGrid.innerHTML=`<div class="card"><span class="muted">${esc(e.message)}</span></div>`}}
+async function cancelRequest(id){if(!(await appConfirm('Cancel this pending investment request and release its reserved funds?',{title:'Cancel investment request',confirmText:'Cancel Request',danger:true})))return;const r=await fetch('/api/investment-requests/'+id+'/cancel',{method:'POST'}),d=await r.json();if(!r.ok)return toast(d.error||'Could not cancel request.');toast('Investment request cancelled.');await Promise.all([loadInvestments(),loadInvestmentBalance()])}
+async function loadInvestments(){try{const r=await fetch('/api/investment-requests',{cache:'no-store'}),d=await r.json();if(!r.ok)throw 0;const all=d.requests||[],active=all.filter(x=>['active','on_hold'].includes(x.status)),history=all.filter(x=>!['active','on_hold'].includes(x.status));activeInvestments.innerHTML=active.length?active.map(x=>`<article class="active-investment-card ${x.status}"><div class="active-investment-head"><div><span>${esc(x.status.replace('_',' '))}</span><h3>${esc(x.plan_name)}</h3></div><b>${resultText(x)}</b></div><div class="active-investment-money"><strong>${fmtAsset(x.source_amount,x.source_asset)} ${esc(x.source_asset)}</strong><span>${money(x.usd_reference_value)} starting reference</span></div><div class="investment-progress"><div><i style="width:${Math.max(0,Math.min(100,Number(x.progress||0))).toFixed(1)}%"></i></div><div><span>${Math.round(Number(x.progress||0))}% complete</span><span>${x.matured?'Matured':(x.daysRemaining+' days left')}</span></div></div><div class="active-investment-meta"><span>Started <b>${x.started_at?new Date(x.started_at).toLocaleDateString():'—'}</b></span><span>Maturity <b>${x.maturity_at?new Date(x.maturity_at).toLocaleDateString():'—'}</b></span></div>${x.status==='on_hold'?`<div class="investment-hold-note">On hold: ${esc(x.hold_reason||'Contact Support for details.')}</div>`:''}<a class="btn primary" href="/investment-position.html?id=${x.id}">View Investment →</a></article>`).join(''):'<div class="active-investment-empty"><b>No active investments yet</b><p>Once an investment request is approved, it will appear here with its progress and maturity date.</p></div>';
+ requestList.innerHTML=history.length?history.map(x=>`<article class="investment-history-row"><div><b>${esc(x.plan_name)}</b><span>${esc(x.reference)} • ${new Date(String(x.created_at).replace(' ','T')+'Z').toLocaleString()}</span></div><div><b>${fmtAsset(x.source_amount,x.source_asset)} ${esc(x.source_asset)}</b><span>${x.duration_days} days</span></div><div><span class="investment-status ${esc(x.status)}">${esc(x.status.replace('_',' '))}</span>${x.status==='pending'?`<button class="investment-cancel-btn" data-cancel="${x.id}">Cancel</button>`:`<a href="/investment-position.html?id=${x.id}">View</a>`}</div></article>`).join(''):'<div class="muted">No investment history yet.</div>';document.querySelectorAll('[data-cancel]').forEach(b=>b.onclick=()=>cancelRequest(b.dataset.cancel))}catch{activeInvestments.innerHTML='<div class="muted">Could not load active investments.</div>';requestList.innerHTML='<div class="muted">Could not load investment history.</div>'}}
+(async()=>{if(!await auth())return;await Promise.all([loadPlans(),loadInvestments(),loadInvestmentBalance()])})();
+</script><script src="/js/account-support.js"></script><script src="/js/notifications.js"></script><script src="/js/i18n.js"></script></body></html>

@@ -1,0 +1,158 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Trading | OptiTrade</title><link rel="stylesheet" href="/css/pages.css"></head><body>
+<header class="top"><a class="logo" href="/dashboard.html">↗ Opti<i>Trade</i></a><div class="top-right"><span class="status-pill">TRADING CENTER</span><a class="pill" href="/markets.html">● Markets</a><a class="pill" href="/profile.html" data-user-name>Account</a><button class="icon" data-logout>↪</button></div></header>
+<main class="shell"><a class="back" href="/dashboard.html">← Back to dashboard</a><section class="hero"><div><div class="eyebrow">TRADING & MANAGEMENT</div><h1>OptiTrade Trading Center</h1><p>Submit a market trade using available USD wallet balance, or submit funds to Trade with OptiTrade.</p></div></section>
+<div class="trade-mode-tabs"><button class="active" data-mode="self">Self-Directed</button><button data-mode="managed">Trade with OptiTrade</button></div>
+<section id="selfMode"><div class="grid"><section class="card span8"><div class="row"><div><h2>Market Search</h2><p class="muted">Choose from Crypto or Forex reference markets.</p></div><span class="status-pill">MINIMUM $1,000</span></div><div class="trade-market-tools"><select id="marketType"><option value="crypto">Crypto</option><option value="forex">Forex</option></select><input id="pairSearch" placeholder="Search pair or asset"></div><div id="tradeMarkets" class="trade-market-list"></div></section>
+<section class="card span4"><h3>Trade Ticket</h3><div class="stack"><div class="field"><label>Market</label><select id="pair"></select></div><div class="field"><label>Side</label><select id="side"><option>Buy</option><option>Sell</option></select></div><div class="field"><label>Amount (USD)</label><input id="amount" type="number" min="1000" step="any" placeholder="1000.00"></div><div class="wallet-available"><span>Available wallet</span><b id="selfWalletBalance">$0.00</b></div><button class="btn primary" id="order">Submit Trade</button><div class="notice compact-notice">Minimum Self-Directed Trading amount: <b>$1,000</b>.</div><div class="notice compact-notice"></div></div></section></div>
+<section class="card" style="margin-top:18px"><div class="row"><div><h2>Trade History</h2><p class="muted">Pending, active and settled trade requests.</p></div><button class="btn" id="refreshTrades">Refresh</button></div><div id="tradeHistory" class="managed-history"></div></section></section>
+<section id="managedMode" hidden><div class="grid"><section class="card span7"><div class="row"><div><h2>Trade with OptiTrade</h2><p class="muted">Submit USD from your wallet for an administrator-managed trading session.</p></div><span class="status-pill">MINIMUM $500</span></div><div class="notice compact-notice">Your assigned OptiTrade administrator handles the trade under account supervision. Eligible crypto requests may be routed to the connected exchange. When a Trade with OptiTrade session settles, the result stays in your <b>Trade Reserve</b> so you can keep trading without first moving it back to Available Balance.</div><div class="stack" style="margin-top:16px"><div class="field"><label>Amount (USD)</label><input id="managedAmount" type="number" min="500" step="any" placeholder="500.00"></div><div class="field"><label>Market preference</label><select id="managedPreference"><option value="mixed">OptiTrade Managed Mix</option><option value="crypto">Crypto</option><option value="forex">Forex</option></select></div><div class="field"><label>Preferred pair <span class="muted">(optional)</span></label><input id="preferredPair" placeholder="e.g. BTC/USD or EUR/USD"></div><div class="field"><label>Note <span class="muted">(optional)</span></label><textarea id="managedNote" rows="3" placeholder="Any trading preference"></textarea></div><button class="btn primary" id="allocate">Submit Trade with OptiTrade</button></div></section><section class="card span5"><div class="row"><div><h3>Trade Reserve</h3><p class="muted">Funds kept ready for Trade with OptiTrade.</p></div><span class="status-pill">USD</span></div>
+<div class="trade-reserve-grid">
+ <div><span>Total Trade Reserve</span><b id="reserveTotal">$0.00</b></div>
+ <div><span>Committed to Open Trades</span><b id="reserveCommitted">$0.00</b></div>
+ <div><span>Free to Re-trade / Move</span><b id="reserveFree">$0.00</b></div>
+ <div><span>Realized P/L</span><b id="reservePnl">$0.00</b></div>
+</div>
+<div id="managedBalances" class="managed-balances"></div>
+<button class="btn primary trade-reserve-move-btn" id="openReserveMove" type="button">Move to Available Balance</button>
+<div class="notice">Settled Trade with OptiTrade funds stay here until you move the free reserve back to Available Balance. Funds committed to pending or active trades cannot be moved.</div>
+<div class="notice">Minimum new Trade with OptiTrade submission: <b>$500</b>. Free Trade Reserve is used first; your Available USD wallet only supplies the difference.</div>
+</section></div><section class="card" style="margin-top:18px"><div class="row"><div><h2>Trade with OptiTrade History</h2><p class="muted">Track pending, active and settled requests.</p></div><button class="btn" id="refreshManaged">Refresh</button></div><div id="managedHistory" class="managed-history"></div></section></section>
+</main>
+<div id="managedReviewModal" class="trade-review-modal" hidden>
+  <div class="trade-review-card">
+    <button id="closeManagedReview" class="trade-review-close" type="button">×</button>
+    <div class="trade-review-head">
+      <span class="status-pill">REVIEW BEFORE SUBMITTING</span>
+      <h2>Trade with OptiTrade Summary</h2>
+      <p>Confirm these details before your funds are reserved and the request is sent to your assigned administrator.</p>
+    </div>
+
+    <div class="trade-review-grid">
+      <div><span>Amount</span><b id="reviewManagedAmount">$0.00</b></div>
+      <div><span>Free Trade Reserve</span><b id="reviewManagedReserve">$0.00</b></div>
+      <div><span>From Trade Reserve</span><b id="reviewReserveUsed">$0.00</b></div>
+      <div><span>From Available Balance</span><b id="reviewWalletUsed">$0.00</b></div>
+      <div><span>Available Balance after</span><b id="reviewManagedAfter">$0.00</b></div>
+      <div><span>Free Reserve after</span><b id="reviewReserveAfter">$0.00</b></div>
+      <div><span>Market preference</span><b id="reviewManagedPreference">—</b></div>
+      <div><span>Preferred pair</span><b id="reviewManagedPair">No preference</b></div>
+      <div><span>Request status</span><b>Pending Admin Review</b></div>
+    </div>
+
+    <div class="trade-review-note">
+      <span>Your note</span>
+      <p id="reviewManagedNote">No additional note.</p>
+    </div>
+
+    <div class="notice compact-notice">
+      When you confirm, free Trade Reserve is used first. Only the remaining amount, if any, is moved from Available Balance into Trade Reserve.
+      It is not counted twice. Your assigned administrator will then review and manage the request.
+      After settlement, the resulting balance stays in Trade Reserve until you choose to move free reserve back to Available Balance.
+    </div>
+
+    <label class="trade-review-confirm">
+      <input id="managedReviewCheck" type="checkbox">
+      <span>I have reviewed the amount, market preference and reservation details.</span>
+    </label>
+
+    <div class="trade-review-actions">
+      <button class="btn" id="editManagedReview" type="button">← Edit</button>
+      <button class="btn primary" id="confirmManagedTrade" type="button" disabled>Confirm & Submit</button>
+    </div>
+  </div>
+</div>
+<div id="reserveMoveModal" class="trade-review-modal" hidden>
+  <div class="trade-review-card reserve-move-card">
+    <button id="closeReserveMove" class="trade-review-close" type="button">×</button>
+    <span class="status-pill">INTERNAL BALANCE MOVE</span>
+    <h2>Move Trade Reserve to Available Balance</h2>
+    <p class="muted">This is an internal balance move, not an external withdrawal. Your total account value does not change.</p>
+    <div class="trade-review-grid reserve-move-grid">
+      <div><span>Free Trade Reserve</span><b id="moveReserveAvailable">$0.00</b></div>
+      <div><span>Current Available USD</span><b id="moveWalletCurrent">$0.00</b></div>
+    </div>
+    <div class="field"><label>Amount to move</label><div class="reserve-amount-row"><input id="reserveMoveAmount" type="number" min="0.01" step="0.01" placeholder="0.00"><button class="btn" id="reserveMoveMax" type="button">MAX</button></div></div>
+    <div class="field"><label>4-digit transaction PIN</label><input id="reserveMovePin" type="password" inputmode="numeric" maxlength="4" placeholder="••••"></div>
+    <div class="notice">Only free reserve can be moved. Money committed to pending or active trades stays locked until that trade is declined or settled.</div>
+    <div class="trade-review-actions"><button class="btn" id="cancelReserveMove" type="button">Cancel</button><button class="btn primary" id="confirmReserveMove" type="button">Move to Available Balance</button></div>
+  </div>
+</div>
+<nav class="bottom"><a href="/dashboard.html"><span>▦</span> Home</a><a href="/deposit.html"><span>⊕</span> Deposit</a><a href="/trade.html"><span>↗</span> Trade</a><a href="/profile.html"><span>♙</span> Profile</a><a href="/support.html"><span>◉</span> Support</a></nav><div id="toast" class="toast"></div>
+<script src="/js/pages.js"></script><script>
+(async()=>{if(!await auth())return;const esc=s=>String(s??'').replace(/[&<>\"]/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[m]));let catalog=[];let managedWalletUsd=0,managedTradingUsd=0,managedReserveAvailable=0,managedReserveTotal=0,pendingManagedReview=null;const qp=new URLSearchParams(location.search),initialPair=qp.get('pair'),initialType=qp.get('type');if(initialType&&['crypto','forex'].includes(initialType))$('#marketType').value=initialType;
+function fmtMarket(x){return x.type==='forex'?Number(x.price).toLocaleString(undefined,{minimumFractionDigits:3,maximumFractionDigits:6}):'$'+Number(x.price).toLocaleString(undefined,{maximumFractionDigits:8})}
+async function loadCatalog(){try{let r=await fetch('/api/market/catalog?type='+$('#marketType').value),d=await r.json();catalog=d.markets||[];renderCatalog()}catch{catalog=[];renderCatalog()}}
+function renderCatalog(){let q=$('#pairSearch').value.trim().toLowerCase(),rows=catalog.filter(x=>!q||x.pair.toLowerCase().includes(q)||String(x.name||'').toLowerCase().includes(q)).slice(0,80);$('#tradeMarkets').innerHTML=rows.map(x=>`<button class="trade-market-row" data-pair="${esc(x.pair)}"><span><b>${esc(x.pair)}</b><small>${esc(x.name||'')}</small></span><span><b>${fmtMarket(x)}</b><small>${x.change24h==null?'FX reference':((x.change24h>=0?'+':'')+Number(x.change24h).toFixed(2)+'%')}</small></span></button>`).join('')||'<p class="muted">No matching markets.</p>';$('#pair').innerHTML=rows.map(x=>`<option>${esc(x.pair)}</option>`).join('');if(initialPair&&rows.some(x=>x.pair===initialPair))$('#pair').value=initialPair;document.querySelectorAll('[data-pair]').forEach(b=>b.onclick=()=>{$('#pair').value=b.dataset.pair;toast('Selected '+b.dataset.pair)})}
+function statusLabel(s){return String(s||'pending').replace('_',' ')}
+async function loadTrades(){let r=await fetch('/api/trades'),d=await r.json();if(!r.ok)return toast(d.error||'Could not load trade history.');$('#selfWalletBalance').textContent='$'+Number(d.walletUsd||0).toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2});$('#tradeHistory').innerHTML=d.orders.length?d.orders.map(x=>`<div class="managed-row"><div><b>${esc(x.reference)}</b><small>${new Date(x.created_at+'Z').toLocaleString()}</small></div><div><b>${esc(x.side.toUpperCase())} ${esc(x.pair)}</b><small>$${Number(x.notional_usd).toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2})} • Ref ${Number(x.entry_price).toLocaleString(undefined,{maximumFractionDigits:8})}</small></div><div><span class="managed-status ${esc(x.status)}">${esc(statusLabel(x.status))}</span><small class="execution-source-label">${(x.execution_source||'internal')==='exchange'?`Kraken • ${esc(x.exchange?.status||x.external_status||'linked')}`:'Internal workflow'}</small>${x.status==='settled'||x.status==='closed'?`<small class="${Number(x.pnl_usd)>=0?'positive':'negative'}">P/L ${Number(x.pnl_usd)>=0?'+':''}$${Number(x.pnl_usd||0).toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2})}</small>`:''}${x.admin_note?`<small>${esc(x.admin_note)}</small>`:''}</div><span></span></div>`).join(''):'<p class="muted">No submitted trades yet.</p>'}
+$('#marketType').onchange=loadCatalog;$('#pairSearch').oninput=renderCatalog;$('#order').onclick=async()=>{let n=Number($('#amount').value);if(!(n>=1000))return toast('Self-Directed Trading starts from $1,000.');if(!$('#pair').value)return toast('Select a market.');$('#order').disabled=true;try{let r=await fetch('/api/trades',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({marketType:$('#marketType').value,pair:$('#pair').value,side:$('#side').value,amount:n})}),d=await r.json();if(!r.ok)return toast(d.error||'Trade could not be submitted.');toast(`Trade submitted • ${d.reference}`);$('#amount').value='';loadTrades()}finally{$('#order').disabled=false}};$('#refreshTrades').onclick=loadTrades;
+async function loadManaged(){let r=await fetch('/api/managed-trades'),d=await r.json();if(!r.ok)return toast(d.error||'Could not load Trade with OptiTrade.');const wb=Object.fromEntries((d.wallet||[]).map(x=>[x.asset,Number(x.amount)])),tb=Object.fromEntries((d.trading||[]).map(x=>[x.asset,Number(x.amount)]));managedWalletUsd=Number(wb.USD||0);managedTradingUsd=Number(tb.USD||0);managedReserveTotal=Number(d.reserve?.total||managedTradingUsd);managedReserveAvailable=Number(d.reserve?.available||0);reserveTotal.textContent=money2(managedReserveTotal);reserveCommitted.textContent=money2(d.reserve?.committed||0);reserveFree.textContent=money2(managedReserveAvailable);reservePnl.textContent=(Number(d.reserve?.realizedPnl||0)>=0?'+':'')+money2(d.reserve?.realizedPnl||0);reservePnl.className=Number(d.reserve?.realizedPnl||0)>=0?'positive':'negative';$('#managedBalances').innerHTML=`<div><span>Available USD Wallet</span><b>${money2(managedWalletUsd)}</b><small>${Number(d.reserve?.activeManaged||0)} active • ${Number(d.reserve?.pendingManaged||0)} pending Trade with OptiTrade request(s)</small></div>`;$('#managedHistory').innerHTML=d.requests.length?d.requests.map(x=>`<div class="managed-row"><div><b>${esc(x.reference)}</b><small>${new Date(x.created_at+'Z').toLocaleString()}</small></div><div><b>$${Number(x.amount).toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2})}</b><small>${esc(x.traded_symbol||x.preferred_symbol||x.market_preference)}</small></div><div><span class="managed-status ${esc(x.status)}">${esc(statusLabel(x.status))}</span><small class="execution-source-label">${(x.execution_source||'internal')==='exchange'?`Kraken • ${esc(x.exchange?.status||x.external_status||'linked')}`:'Internal workflow'}</small>${x.status==='settled'?`<small class="${Number(x.pnl_amount)>=0?'positive':'negative'}">P/L ${Number(x.pnl_amount)>=0?'+':''}$${Math.abs(Number(x.pnl_amount||0)).toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2})}</small>`:''}${x.admin_note?`<small>${esc(x.admin_note)}</small>`:''}</div><span></span></div>`).join(''):'<p class="muted">No Trade with OptiTrade requests yet.</p>'}
+function managedPreferenceLabel(v){return v==='crypto'?'Crypto':v==='forex'?'Forex':'OptiTrade Managed Mix'}
+function money2(n){return '$'+Number(n||0).toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2})}
+function closeManagedSummary(){managedReviewModal.hidden=true;managedReviewCheck.checked=false;confirmManagedTrade.disabled=true}
+$('#allocate').onclick=()=>{
+ const body={amount:Number($('#managedAmount').value),marketPreference:$('#managedPreference').value,preferredSymbol:$('#preferredPair').value.trim(),note:$('#managedNote').value.trim()};
+ if(!(body.amount>=500))return toast('Minimum Trade with OptiTrade amount is $500.');
+ const combined=managedReserveAvailable+managedWalletUsd;
+ if(body.amount>combined+1e-8)return toast(`Insufficient funds. Free Trade Reserve ${money2(managedReserveAvailable)} + Available Balance ${money2(managedWalletUsd)}.`);
+ const reserveUsed=Math.min(body.amount,managedReserveAvailable),walletUsed=Math.max(0,body.amount-reserveUsed);
+ pendingManagedReview={...body,reserveUsed,walletUsed};
+ reviewManagedAmount.textContent=money2(body.amount);
+ reviewManagedReserve.textContent=money2(managedReserveAvailable);
+ reviewReserveUsed.textContent=money2(reserveUsed);
+ reviewWalletUsed.textContent=money2(walletUsed);
+ reviewManagedAfter.textContent=money2(Math.max(0,managedWalletUsd-walletUsed));
+ reviewReserveAfter.textContent=money2(Math.max(0,managedReserveAvailable-reserveUsed));
+ reviewManagedPreference.textContent=managedPreferenceLabel(body.marketPreference);
+ reviewManagedPair.textContent=body.preferredSymbol||'No preference';
+ reviewManagedNote.textContent=body.note||'No additional note.';
+ managedReviewCheck.checked=false;confirmManagedTrade.disabled=true;managedReviewModal.hidden=false;
+};
+managedReviewCheck.onchange=()=>{confirmManagedTrade.disabled=!managedReviewCheck.checked};
+closeManagedReview.onclick=closeManagedSummary;editManagedReview.onclick=closeManagedSummary;
+managedReviewModal.onclick=e=>{if(e.target===managedReviewModal)closeManagedSummary()};
+confirmManagedTrade.onclick=async()=>{
+ if(!pendingManagedReview||!managedReviewCheck.checked)return;
+ confirmManagedTrade.disabled=true;confirmManagedTrade.textContent='Submitting…';
+ try{
+  let r=await fetch('/api/managed-trades',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({amount:pendingManagedReview.amount,marketPreference:pendingManagedReview.marketPreference,preferredSymbol:pendingManagedReview.preferredSymbol,note:pendingManagedReview.note})}),d=await r.json();
+  if(!r.ok){toast(d.error||'Trade could not be submitted.');return}
+  closeManagedSummary();
+  toast('Trade with OptiTrade submitted • '+d.reference);
+  $('#managedAmount').value='';$('#managedNote').value='';$('#preferredPair').value='';
+  pendingManagedReview=null;
+  await loadManaged();await loadTrades();
+ }finally{
+  confirmManagedTrade.textContent='Confirm & Submit';
+  confirmManagedTrade.disabled=!managedReviewCheck.checked;
+ }
+};
+
+function openReserveTransfer(){
+ if(!(managedReserveAvailable>0))return toast('There is no free Trade Reserve to move right now.');
+ moveReserveAvailable.textContent=money2(managedReserveAvailable);moveWalletCurrent.textContent=money2(managedWalletUsd);
+ reserveMoveAmount.value='';reserveMovePin.value='';reserveMoveModal.hidden=false;reserveMoveAmount.focus();
+}
+function closeReserveTransfer(){reserveMoveModal.hidden=true;reserveMovePin.value=''}
+openReserveMove.onclick=openReserveTransfer;closeReserveMove.onclick=closeReserveTransfer;cancelReserveMove.onclick=closeReserveTransfer;
+reserveMoveModal.onclick=e=>{if(e.target===reserveMoveModal)closeReserveTransfer()};
+reserveMoveMax.onclick=()=>{reserveMoveAmount.value=managedReserveAvailable.toFixed(2)};
+reserveMovePin.oninput=()=>{reserveMovePin.value=reserveMovePin.value.replace(/\D/g,'').slice(0,4)};
+confirmReserveMove.onclick=async()=>{
+ const amount=Number(reserveMoveAmount.value),pin=reserveMovePin.value.trim();
+ if(!(amount>0))return toast('Enter the amount to move.');
+ if(amount>managedReserveAvailable+1e-8)return toast(`Only ${money2(managedReserveAvailable)} is free in Trade Reserve.`);
+ if(!/^\d{4}$/.test(pin))return toast('Enter your 4-digit transaction PIN.');
+ if(!(await appConfirm(`Move ${money2(amount)} from Trade Reserve to Available Balance?`,{title:'Move Trade Reserve',confirmText:'Move Balance'})))return;
+ confirmReserveMove.disabled=true;confirmReserveMove.textContent='Moving…';
+ try{
+  const r=await fetch('/api/managed-trades/reserve-to-wallet',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({amount,pin})}),d=await r.json();
+  if(!r.ok)return toast(d.error||'Could not move Trade Reserve.');
+  closeReserveTransfer();toast(`${money2(amount)} moved to Available Balance.`);await loadManaged();await loadTrades();
+ }finally{confirmReserveMove.disabled=false;confirmReserveMove.textContent='Move to Available Balance'}
+};
+
+$('#refreshManaged').onclick=loadManaged;
+document.querySelectorAll('[data-mode]').forEach(b=>b.onclick=()=>{let m=b.dataset.mode;document.querySelectorAll('[data-mode]').forEach(x=>x.classList.toggle('active',x===b));$('#selfMode').hidden=m!=='self';$('#managedMode').hidden=m!=='managed';if(m==='managed')loadManaged()});
+await loadCatalog();await loadTrades();await loadManaged()})();
+</script><script src="/js/account-support.js"></script><script src="/js/notifications.js"></script><script src="/js/i18n.js"></script></body></html>

@@ -1,0 +1,27 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Transaction History | OptiProTrade</title><link rel="stylesheet" href="/css/pages.css"></head><body>
+<header class="top"><a class="logo" href="/dashboard.html">↗ Opti<i>Trade</i></a><div class="top-right"><a class="pill" href="/markets.html">● Markets</a><a class="pill" href="/profile.html" data-user-name>Account</a><button class="icon" data-logout title="Logout">↪</button></div></header>
+<main class="shell"><a class="back" href="/dashboard.html">← Back to dashboard</a>
+<section class="hero"><div><div class="eyebrow">ACCOUNT ACTIVITY</div><h1>Transaction History</h1><p>Review deposits, withdrawals, trades, balance changes and portfolio switches recorded on your account.</p></div></section>
+<section class="card"><div class="row"><div><h2>All Recent Transactions</h2><p class="muted">Showing up to the latest 50 account records.</p></div><div class="button-row"><a class="btn ghost" href="/statement.html">Printable Statement</a><button class="btn" onclick="location.reload()">Refresh</button></div></div>
+<div class="list" id="historyList" style="margin-top:16px"><div class="item"><span class="muted">Loading transaction history…</span></div></div></section>
+</main>
+<nav class="bottom"><a href="/dashboard.html"><span>▦</span> Home</a><a href="/deposit.html"><span>⊕</span> Deposit</a><a href="/trade.html"><span>↗</span> Trade</a><a href="/profile.html"><span>♙</span> Profile</a><a href="/support.html"><span>◉</span> Support</a></nav><div id="toast" class="toast"></div>
+<script src="/js/pages.js"></script><script>
+(async()=>{
+ if(!await auth())return;
+ const esc=s=>String(s??'').replace(/[&<>\"]/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;'}[m]));
+ const label=x=>{
+   if(['balance_credit','wallet_adjustment','portfolio_adjustment','trading_adjustment'].includes(x.type)&&x.direction==='credit')return 'Balance Credited';
+   if(['balance_debit','wallet_adjustment','portfolio_adjustment','trading_adjustment'].includes(x.type)&&x.direction==='debit')return 'Balance Debited';
+   return ({withdrawal:'Withdrawal',deposit:'Deposit',self_trade:'Self-Directed Trade',managed_trade:'Trade with OptiTrade',trade_settlement:'Trade Settlement',managed_trade_settlement:'Trade Settlement',portfolio_conversion:'Portfolio Switch',investment_plan:'Investment Plan',investment_reserve:'Investment Reserved',investment_release:'Investment Released',investment_settlement:'Investment Settlement',internal_transfer_sent:'Internal Transfer Sent',internal_transfer_received:'Internal Transfer Received'}[x.type]||String(x.type||'Transaction').replaceAll('_',' ').replace(/\b\w/g,c=>c.toUpperCase()))
+ };
+ const amount=x=>{
+   if(x.kind==='deposit'&&x.usdValue!=null)return `${money(x.usdValue)} (${Number(x.amount||0).toLocaleString(undefined,{maximumFractionDigits:8})} ${esc(x.asset||'')})`;
+   return x.asset==='USD'?money(x.amount):`${Number(x.amount||0).toLocaleString(undefined,{maximumFractionDigits:8})} ${esc(x.asset||'')}`;
+ };
+ try{
+   const r=await fetch('/api/dashboard/recent-transactions?limit=50',{cache:'no-store'}),d=await r.json();
+   historyList.innerHTML=r.ok&&d.transactions?.length?d.transactions.map(x=>`<div class="item"><span class="muted">${new Date(String(x.createdAt||'').replace(' ','T')+'Z').toLocaleString()}</span><span><b>${esc(label(x))}</b><small>${esc(x.reference||'')} • ${esc(String(x.status||'completed').replace('_',' '))}${x.note?` • ${esc(x.note)}`:''}</small></span><span>${esc(x.asset||'')}</span><span>${amount(x)}</span></div>`).join(''):'<div class="item"><span class="muted">No transactions yet.</span></div>';
+ }catch{historyList.innerHTML='<div class="item"><span class="muted">Could not load transaction history. Refresh to try again.</span></div>'}
+})();
+</script><script src="/js/account-support.js"></script><script src="/js/notifications.js"></script><script src="/js/i18n.js"></script></body></html>

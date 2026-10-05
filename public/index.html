@@ -1,0 +1,255 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#07101f">
+  <title>OptiTrade • Markets, Trading & Portfolio Tools</title>
+  <meta name="description" content="Explore reference market data, trading tools, managed trading, and portfolio tools with OptiTrade.">
+  <link rel="stylesheet" href="/css/home.css">
+</head>
+<body>
+<div class="home-app">
+  <header class="home-header">
+    <a class="home-logo" href="/"><span>↗</span> Opti<i>Trade</i></a>
+    <nav class="desktop-nav">
+      <a href="#markets">Markets</a>
+      <a href="#features">Features</a>
+      <a href="#managed">Managed Trading</a>
+      <a href="#how">How It Works</a>
+      <a href="/support.html">Support</a>
+    </nav>
+    <div class="home-actions">
+      <a class="login-link" href="/login.html">Log In</a>
+      <a class="primary-link" href="/register.html">Create Account</a>
+      <button id="menuBtn" class="menu-btn" aria-label="Open menu">☰</button>
+    </div>
+  </header>
+
+  <div class="market-strip" aria-label="Reference market ticker">
+    <div class="market-strip-live"><i></i><span>MARKET DATA</span></div>
+    <div class="ticker-window">
+      <div class="ticker-marquee" id="homeTickerMarquee">
+        <div class="ticker-group" id="homeTicker">
+          <span>BTC/USD <b id="btcTicker">Loading…</b></span>
+          <span>ETH/USD <b id="ethTicker">Loading…</b></span>
+          <span>EUR/USD <b id="eurTicker">—</b></span>
+          <span>GBP/USD <b id="gbpTicker">—</b></span>
+          <span>USD/JPY <b id="jpyTicker">—</b></span>
+        </div>
+        <div class="ticker-group" aria-hidden="true">
+          <span>BTC/USD <b data-ticker-clone="btcTicker">Loading…</b></span>
+          <span>ETH/USD <b data-ticker-clone="ethTicker">Loading…</b></span>
+          <span>EUR/USD <b data-ticker-clone="eurTicker">—</b></span>
+          <span>GBP/USD <b data-ticker-clone="gbpTicker">—</b></span>
+          <span>USD/JPY <b data-ticker-clone="jpyTicker">—</b></span>
+        </div>
+      </div>
+    </div>
+    <span class="ticker-note">REFERENCE</span>
+  </div>
+
+  <aside id="mobileMenu" class="mobile-menu">
+    <div class="mobile-menu-head">
+      <a class="home-logo" href="/"><span>↗</span> Opti<i>Trade</i></a>
+      <button id="closeMenu" aria-label="Close menu">×</button>
+    </div>
+    <nav>
+      <a href="#markets">Markets</a>
+      <a href="#features">Features</a>
+      <a href="#managed">Managed Trading</a>
+      <a href="#how">How It Works</a>
+      <a href="/support.html">Support</a>
+      <a href="/login.html">Log In</a>
+      <a class="primary-link" href="/register.html">Create Account</a>
+    </nav>
+  </aside>
+  <div id="menuShade" class="menu-shade"></div>
+
+  <main>
+    <section class="hero">
+      <div class="hero-grid">
+        <div class="hero-copy">
+          <span class="eyebrow-pill">MULTI-MARKET TRADING PLATFORM</span>
+          <h1>Explore Global Markets.<br><span>Trade Smarter.</span></h1>
+          <p class="hero-lead">Track crypto and FX reference markets, manage your portfolio, and manage your trading workspace through one modern OptiTrade experience.</p>
+          <div class="hero-cta">
+            <a class="hero-primary" href="/register.html">Create Account <span>→</span></a>
+            <a class="hero-secondary" href="/login.html">Log In</a>
+          </div>
+          <div class="hero-trust">
+            <div><b>24/7</b><span>Platform access</span></div>
+            <div><b>Crypto + FX</b><span>Reference markets</span></div>
+            <div><b>Unified</b><span>Account workspace</span></div>
+          </div>
+        </div>
+
+        <div class="hero-terminal" aria-label="OptiTrade market preview">
+          <div class="terminal-head">
+            <div>
+              <span class="dot red"></span><span class="dot amber"></span><span class="dot green"></span>
+            </div>
+            <small>OPTITRADE MARKET BOARD</small>
+            <span class="terminal-live">● LIVE DATA</span>
+          </div>
+          <div class="terminal-pair">
+            <div>
+              <small>BTC / USD</small>
+              <strong id="heroPrice">Loading…</strong>
+              <span id="heroChange">Reference market</span>
+            </div>
+            <div class="pair-switches">
+              <button class="active" data-home-pair="BTC">BTC</button>
+              <button data-home-pair="ETH">ETH</button>
+            </div>
+          </div>
+          <canvas id="heroChart"></canvas>
+          <div class="terminal-stats">
+            <div><span>Market</span><b id="heroPair">BTC/USD</b></div>
+            <div><span>Type</span><b>Reference</b></div>
+            <div><span>Mode</span><b>Market View</b></div>
+          </div>
+        </div>
+      </div>
+      <div class="hero-glow hero-glow-a"></div>
+      <div class="hero-glow hero-glow-b"></div>
+    </section>
+
+    <section class="quick-markets" id="markets">
+      <div class="section-heading centered">
+        <span class="section-kicker">MARKET ACCESS</span>
+        <h2>One place for multiple markets</h2>
+        <p>Use live/reference market feeds to research opportunities before using OptiTrade's trading tools.</p>
+      </div>
+      <div class="market-category-grid">
+        <article>
+          <div class="cat-icon">₿</div><h3>Cryptocurrency</h3>
+          <p>Browse major digital assets and market pairs with searchable reference pricing.</p>
+          <a href="/markets.html">Explore crypto →</a>
+        </article>
+        <article>
+          <div class="cat-icon">⇄</div><h3>Forex</h3>
+          <p>Follow popular currency pairs with clearly labelled FX reference-rate history.</p>
+          <a href="/markets.html">Explore forex →</a>
+        </article>
+        <article>
+          <div class="cat-icon">▥</div><h3>Stocks & Indices</h3>
+          <p>Prepared for broader multi-asset data integration as OptiTrade expands.</p>
+          <a href="/markets.html">View markets →</a>
+        </article>
+        <article>
+          <div class="cat-icon">◇</div><h3>Commodities</h3>
+          <p>Gold, silver, energy and additional instruments can share the same market terminal.</p>
+          <a href="/markets.html">View terminal →</a>
+        </article>
+      </div>
+    </section>
+
+    <section class="features-band" id="features">
+      <div class="section-heading centered">
+        <span class="section-kicker">WHY OPTITRADE</span>
+        <h2>Built around trading and account management</h2>
+        <p>Everything is designed to keep markets, balances, activity and support connected.</p>
+      </div>
+      <div class="feature-grid">
+        <article><span class="feature-icon">⌁</span><h3>Market Chart Board</h3><p>Crypto and FX views with range controls and responsive charts.</p></article>
+        <article><span class="feature-icon">▣</span><h3>Portfolio Management</h3><p>Track Wallet, Portfolio and Trading balances in separate account sections.</p></article>
+        <article><span class="feature-icon">↗</span><h3>Self-Directed Trading</h3><p>Trade with ease with our live market chat, 100 percent accurate and fast excursion.</p></article>
+        <article><span class="feature-icon">◉</span><h3>Support Center</h3><p>Keep customer communication, account notices and support conversations in one place.</p></article>
+        <article><span class="feature-icon">♢</span><h3>Deposit</h3><p>Customer-submitted deposi and track both successful and unsuccessful deposit and a customer representative is always available for any dispute.</p></article>
+        <article><span class="feature-icon">◎</span><h3>Admin Management</h3><p>Assigning a well trained admin to manage your asset, 101% profit guarantee.</p></article>
+      </div>
+    </section>
+
+    <section class="managed-section" id="managed">
+      <div class="managed-copy">
+        <span class="section-kicker">TRADE WITH OPTITRADE</span>
+        <h2>Allocate funds to a managed trading session</h2>
+        <p>Customers can allocate account funds to a managed trading request and follow it from Pending to Active and Settled.</p>
+        <div class="managed-points">
+          <span>✓ Customer chooses allocation</span>
+          <span>✓ Admin assigns the trading market</span>
+          <span>✓ Result can be profit or loss</span>
+          <span>✓ Full activity remains visible</span>
+        </div>
+        <a class="hero-primary" href="/register.html">Create Your Account <span>→</span></a>
+      </div>
+      <div class="managed-card">
+        <div class="managed-card-head"><span>MANAGED TRADING SESSION</span><b>ACTIVE</b></div>
+        <div class="managed-balance">
+          <small>Allocated capital</small>
+          <strong>$1,000.00</strong>
+          <span>ACCOUNT ALLOCATION</span>
+        </div>
+        <div class="managed-row"><span>Market</span><b>BTC / USD</b></div>
+        <div class="managed-row"><span>Session</span><b>Managed Trading</b></div>
+        <div class="managed-row"><span>Execution</span><b>Internal / Exchange</b></div>
+        <div class="managed-result"><span>Status tracking</span><strong>Pending → Active → Settled</strong></div>
+        <small class="managed-disclaimer">Trading outcomes are not guaranteed. Eligible crypto trades may use an enabled external execution provider; unsupported markets remain in the internal workflow.</small>
+      </div>
+    </section>
+
+    <section class="how-section" id="how">
+      <div class="section-heading centered">
+        <span class="section-kicker">GET STARTED</span>
+        <h2>A clear path from registration to trading</h2>
+      </div>
+      <div class="steps-grid">
+        <article><span>01</span><h3>Create your account</h3><p>Register and verify your email to access the OptiTrade workspace.</p></article>
+        <article><span>02</span><h3>Review the markets</h3><p>Explore crypto and FX reference prices, charts and market pairs.</p></article>
+        <article><span>03</span><h3>Fund your account</h3><p>Choose a matching wallet to deposit.</p></article>
+        <article><span>04</span><h3>Choose how to trade</h3><p>Use Self-Directed Trading or submit a Trade with OptiTrade. Which is 100% reliable.</p></article>
+      </div>
+    </section>
+
+    <section class="account-preview">
+      <div class="preview-panel">
+        <div class="preview-copy">
+          <span class="section-kicker">ONE CONNECTED ACCOUNT</span>
+          <h2>Markets, balances, withdrawals and activity together</h2>
+          <p>The customer dashboard brings account balances, market charts, deposits, withdrawals, managed trading, notifications and support into one responsive interface.</p>
+          <a href="/register.html">Create your OptiTrade account →</a>
+        </div>
+        <div class="preview-cards">
+          <article><span>Wallet</span><strong>$8,420.00</strong><small>Account balance</small></article>
+          <article><span>Portfolio</span><strong>$12,860.00</strong><small>Estimated portfolio value</small></article>
+          <article><span>Trading</span><strong>$2,500.00</strong><small>Trading capital</small></article>
+          <article><span>Withdrawals</span><strong>Open</strong><small>Admin-controlled availability</small></article>
+        </div>
+      </div>
+    </section>
+
+   
+
+    <section class="final-cta">
+      <div>
+        <span class="section-kicker">START EXPLORING</span>
+        <h2>Your OptiTrade workspace is ready</h2>
+        <p>Create an account to access markets, account balances and trading tools.</p>
+      </div>
+      <div>
+        <a class="hero-primary" href="/register.html">Create Account <span>→</span></a>
+        <a class="hero-secondary" href="/login.html">Log In</a>
+      </div>
+    </section>
+  </main>
+
+  <footer class="home-footer">
+    <div class="footer-top">
+      <div><a class="home-logo" href="/"><span>↗</span> Opti<i>Trade</i></a><p>Market research, trading tools and portfolio management in one platform.</p></div>
+      <div><h4>Platform</h4><a href="/markets.html">Markets</a><a href="/trade.html">Trading</a><a href="/portfolio.html">Portfolio</a></div>
+      <div><h4>Account</h4><a href="/login.html">Log In</a><a href="/register.html">Create Account</a><a href="/forgot-password.html">Forgot Password</a></div>
+      <div><h4>Help</h4><a href="/support.html">Support</a><a href="#how">How It Works</a></div>
+    </div>
+    <div class="footer-bottom"><span>© <span id="year"></span> OptiTrade.</span><span>Reference-market platform.</span></div>
+  </footer>
+
+  <div class="language-pill" title="Language selector is available throughout OptiTrade">
+    <span>🌐</span><span>EN</span>
+  </div>
+  <a class="home-chat" href="/support.html" aria-label="Open support">◉</a>
+</div>
+<script src="/js/home.js"></script>
+<script src="/js/i18n.js"></script>
+</body>
+</html>

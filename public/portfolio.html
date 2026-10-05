@@ -1,0 +1,252 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>My Portfolio | OptiProTrade</title><link rel="stylesheet" href="/css/pages.css"></head><body>
+<header class="top"><a class="logo" href="/dashboard.html">↗ Opti<i>Trade</i></a><div class="top-right"><a class="pill" href="/markets.html">● Markets</a><a class="pill" href="/profile.html" data-user-name>Account</a><button class="icon" data-logout title="Logout">↪</button></div></header>
+
+<main class="shell"><a class="back" href="/dashboard.html">← Back to dashboard</a>
+<section class="hero"><div><div class="eyebrow">PORTFOLIO & INVESTMENTS</div><h1>My Portfolio</h1><p>Review your holdings and switch value between supported account assets using current reference prices.</p></div></section>
+
+<section class="portfolio-overview">
+  <div class="portfolio-value-card">
+    <div>
+      <div class="eyebrow">ACCOUNT HOLDINGS VALUE</div>
+      <h2 id="total">$0.00</h2>
+      <div class="portfolio-value-context">
+        <span><b id="totalBtcHolding">0.00000000 BTC</b> BTC holding</span>
+        <span><b id="totalBtcPrice">$0.00</b> BTC/USD reference</span>
+      </div>
+    </div>
+    <div class="portfolio-orbit"><span>₿</span></div>
+  </div>
+  <div class="portfolio-side-card">
+    <span>Asset switching</span>
+    <b>BTC • ETH • USDT • USD</b>
+    <small>Reference pricing • PIN confirmation</small>
+    <a class="btn" href="#switch">Open Switch</a>
+  </div>
+</section>
+
+<section class="card asset-wallet-card">
+  <div class="section-head"><div><div class="eyebrow">YOUR HOLDINGS</div><h2>Balances</h2><p class="muted">Choose any balance to enter an amount or prepare its maximum available amount for switching.</p></div><span class="pill-soft">LIVE REFERENCE</span></div>
+  <div id="assetCards" class="portfolio-asset-grid"></div>
+</section>
+
+<section class="card portfolio-switch-card" id="switch">
+  <div class="section-head"><div><div class="eyebrow">PORTFOLIO REBALANCE</div><h2>Switch Assets</h2><p class="muted">Select the source and destination. Enter an amount, review the quote, then confirm with your transaction PIN.</p></div><span class="pill-soft">REFERENCE RATE</span></div>
+
+  <div class="switch-flow">
+    <div class="switch-asset-select">
+      <label>From</label>
+      <select id="fromAsset"><option>BTC</option><option>ETH</option><option>USDT</option><option>USD</option></select>
+      <small id="fromBalance">Available: —</small>
+    </div>
+    <button class="switch-direction" id="swapAssets" type="button" title="Swap direction">⇄</button>
+    <div class="switch-asset-select">
+      <label>To</label>
+      <select id="toAsset"><option>ETH</option><option>BTC</option><option>USDT</option><option>USD</option></select>
+      <small id="toHint">Choose destination asset</small>
+    </div>
+    <div class="switch-amount-box">
+      <label>Amount to switch</label>
+      <div class="switch-amount-row"><input id="switchAmount" type="number" min="0" step="any" inputmode="decimal" placeholder="Enter amount"><button class="switch-max-btn" id="maxAmount" type="button">MAX</button></div>
+    </div>
+  </div>
+
+  <div class="switch-quote" id="switchQuote">
+    <div><span>You send</span><b id="quoteFrom">—</b></div>
+    <span class="quote-arrow">→</span>
+    <div><span>You receive</span><b id="quoteTo">—</b></div>
+    <div class="quote-rate"><span>Reference rate</span><b id="quoteRate">Enter an amount</b><small id="quoteTime"></small></div>
+  </div>
+
+  <div class="notice portfolio-switch-notice">The displayed rate is a reference value. The amount is recalculated when you confirm. This updates the internal OptiProTrade account ledger and does not submit an external exchange order.</div>
+  <div class="switch-confirm-bar"><div><span>Ready to switch?</span><small>Review the amount and destination before continuing.</small></div><button class="btn primary" id="confirmSwitch" type="button">Review & Confirm</button></div>
+</section>
+
+<section class="card recent-switch-card"><div class="section-head"><div><h2>Recent Portfolio Switches</h2><p class="muted">Your most recent internal asset conversions.</p></div></div><div id="switchHistory" class="switch-history-list"><div class="muted">Loading…</div></div></section>
+<p class="notice portfolio-ledger-note">Account Holdings Value is the current reference value of balances across Wallet, Trading, Investment and Portfolio sections, counted once per section. Moving funds between sections does not create extra value.</p>
+</main>
+
+<!-- PIN confirmation modal -->
+<div class="switch-modal-backdrop" id="switchPinModal" hidden>
+  <div class="switch-pin-modal" role="dialog" aria-modal="true" aria-labelledby="switchModalTitle">
+    <button class="switch-modal-close" id="closeSwitchModal" type="button">×</button>
+    <div class="switch-modal-icon">⇄</div>
+    <div class="eyebrow">FINAL CONFIRMATION</div>
+    <h2 id="switchModalTitle">Confirm Asset Switch</h2>
+    <p class="muted">Check the details below, then enter your 4-digit transaction PIN.</p>
+    <div class="switch-modal-summary">
+      <div><span>From</span><b id="modalFrom">—</b></div>
+      <div class="modal-arrow">→</div>
+      <div><span>To</span><b id="modalTo">—</b></div>
+    </div>
+    <div class="switch-modal-rate"><span>Reference rate</span><b id="modalRate">—</b></div>
+    <div class="field switch-pin-field"><label>Transaction PIN</label><input id="switchPin" type="password" inputmode="numeric" maxlength="4" autocomplete="off" placeholder="••••"><small class="muted">Your PIN authorizes this account change. Never share it with support.</small></div>
+    <div class="switch-modal-actions"><button class="btn ghost" id="cancelSwitchModal" type="button">Cancel</button><button class="btn primary" id="executeSwitch" type="button">Confirm Switch</button></div>
+  </div>
+</div>
+
+<nav class="bottom"><a href="/dashboard.html"><span>▦</span> Home</a><a href="/deposit.html"><span>⊕</span> Deposit</a><a href="/trade.html"><span>↗</span> Trade</a><a href="/profile.html"><span>♙</span> Profile</a><a href="/support.html"><span>◉</span> Support</a></nav><div id="toast" class="toast"></div>
+
+<script src="/js/pages.js"></script><script>
+const fmtAsset=(v,a)=>a==='USD'||a==='USDT'?Number(v||0).toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:6}):Number(v||0).toLocaleString(undefined,{minimumFractionDigits:0,maximumFractionDigits:10});
+const assetMeta={
+ BTC:{icon:'₿',name:'Bitcoin',tag:'Primary portfolio value'},
+ ETH:{icon:'◆',name:'Ethereum',tag:'Crypto holding'},
+ USDT:{icon:'₮',name:'Tether',tag:'Stablecoin holding'},
+ USD:{icon:'$',name:'Internal USD',tag:'Internal account ledger'}
+};
+let quoteTimer=null,lastQuote=null,availability={};
+
+function portfolioAssetBalance(asset){return totalAccountAsset(asset)}
+function walletAssetBalance(asset){return Number(OT.balances?.[asset]||0)}
+function availableAssetBalance(asset){return Number(availability?.[asset]?.available ?? walletAssetBalance(asset))}
+function assetUsdValue(asset){
+ const amount=portfolioAssetBalance(asset);
+ if(asset==='BTC')return amount*Number(OT.prices.BTC||0);
+ if(asset==='ETH')return amount*Number(OT.prices.ETH||0);
+ if(asset==='USDT')return amount*Number(OT.prices.USDT||1);
+ return amount;
+}
+function preferredDestination(from){
+ if(from==='BTC')return 'ETH';
+ if(from==='ETH')return 'BTC';
+ if(from==='USDT')return 'BTC';
+ return 'BTC';
+}
+function renderPortfolio(){
+ const btcAmount=totalAccountAsset('BTC'),btcPrice=Number(OT.prices.BTC||0);
+ $('#total').textContent=money(portfolioValue());
+ $('#totalBtcHolding').textContent=`${btcAmount.toLocaleString(undefined,{minimumFractionDigits:8,maximumFractionDigits:8})} BTC`;
+ $('#totalBtcPrice').textContent=btcPrice>0?money(btcPrice):'Unavailable';
+
+ const rows=['BTC','ETH','USDT','USD'];
+ $('#assetCards').innerHTML=rows.map(a=>{
+   const m=assetMeta[a],balance=portfolioAssetBalance(a),wallet=walletAssetBalance(a),available=availableAssetBalance(a),reserved=Math.max(0,wallet-available);
+   return `<article class="portfolio-asset-card" data-asset-card="${a}">
+     <div class="asset-card-head"><div class="asset-card-icon asset-${a.toLowerCase()}">${m.icon}</div><div><b>${a}</b><span>${m.name}</span></div></div>
+     <div class="asset-card-balance">${fmtAsset(balance,a)} <small>${a}</small></div>
+     <div class="asset-card-value">${money(assetUsdValue(a))} reference value</div>
+     <div class="asset-card-available"><span>Available to switch</span><b>${fmtAsset(available,a)} ${a}</b></div>
+     ${reserved>0?`<div class="asset-card-reserved">${fmtAsset(reserved,a)} ${a} reserved for pending withdrawal</div>`:''}
+     <div class="asset-card-actions">
+       <button type="button" data-enter-asset="${a}">Enter amount</button>
+       <button type="button" class="asset-max-action" data-max-asset="${a}" ${available<=0?'disabled':''}>Swap max</button>
+     </div>
+   </article>`;
+ }).join('');
+
+ document.querySelectorAll('[data-enter-asset]').forEach(btn=>btn.onclick=()=>prepareAsset(btn.dataset.enterAsset,false));
+ document.querySelectorAll('[data-max-asset]').forEach(btn=>btn.onclick=()=>prepareAsset(btn.dataset.maxAsset,true));
+ syncSwitchUI();
+}
+function prepareAsset(asset,useMax){
+ fromAsset.value=asset;
+ toAsset.value=preferredDestination(asset);
+ if(useMax)switchAmount.value=availableAssetBalance(asset);
+ else switchAmount.value='';
+ syncSwitchUI();
+ document.querySelector('#switch').scrollIntoView({behavior:'smooth',block:'start'});
+ setTimeout(()=>{if(!useMax)switchAmount.focus()},450);
+}
+function syncSwitchUI(){
+ if(fromAsset.value===toAsset.value)toAsset.value=preferredDestination(fromAsset.value);
+ fromBalance.textContent=`Available: ${fmtAsset(availableAssetBalance(fromAsset.value),fromAsset.value)} ${fromAsset.value}`;
+ toHint.textContent=`Receive ${toAsset.value} at current reference rate`;
+ lastQuote=null;quoteFrom.textContent='—';quoteTo.textContent='—';quoteRate.textContent='Enter an amount';quoteTime.textContent='';
+ clearTimeout(quoteTimer);quoteTimer=setTimeout(loadQuote,280);
+}
+async function fetchQuote(){
+ const amount=Number(switchAmount.value),from=fromAsset.value,to=toAsset.value;
+ if(!(amount>0)||from===to)return null;
+ const r=await fetch(`/api/portfolio/switch/quote?from=${encodeURIComponent(from)}&to=${encodeURIComponent(to)}&amount=${encodeURIComponent(amount)}`,{cache:'no-store'});
+ const d=await r.json();
+ if(!r.ok)throw new Error(d.error||'Quote unavailable');
+ return d;
+}
+async function loadQuote(){
+ const amount=Number(switchAmount.value),from=fromAsset.value,to=toAsset.value;if(!(amount>0)||from===to)return;
+ try{
+   const d=await fetchQuote();lastQuote=d;
+   quoteFrom.textContent=`${fmtAsset(d.amount,from)} ${from}`;
+   quoteTo.textContent=`${fmtAsset(d.toAmount,to)} ${to}`;
+   quoteRate.textContent=`1 ${from} ≈ ${fmtAsset(d.rate,to)} ${to}`;
+   quoteTime.textContent=`Reference quote • ${new Date(d.updatedAt).toLocaleTimeString()}`;
+ }catch(e){lastQuote=null;quoteRate.textContent=e.message||'Quote unavailable'}
+}
+async function loadAvailability(){
+ try{
+   const r=await fetch('/api/withdrawal/status',{cache:'no-store'}),d=await r.json();
+   if(r.ok){availability=Object.fromEntries((d.assets||[]).map(x=>[x.asset,x]))}
+ }catch{}
+}
+async function loadHistory(){
+ try{
+   const r=await fetch('/api/portfolio/switch/history',{cache:'no-store'}),d=await r.json();
+   switchHistory.innerHTML=d.switches?.length?d.switches.map(x=>`<div class="switch-history-row"><div class="switch-history-icon">⇄</div><div><b>${fmtAsset(x.from_amount,x.from_asset)} ${x.from_asset} → ${fmtAsset(x.to_amount,x.to_asset)} ${x.to_asset}</b><span>${new Date(String(x.created_at).replace(' ','T')+'Z').toLocaleString()}</span></div><div><b>${money(x.usd_value)}</b><span>Reference value</span></div></div>`).join(''):'<div class="switch-history-empty">No portfolio switches yet.</div>';
+ }catch{switchHistory.innerHTML='<div class="switch-history-empty">Could not load switch history.</div>'}
+}
+async function refreshData(){
+ if(!await auth())return false;
+ await Promise.all([markets(),loadAvailability()]);
+ renderPortfolio();
+ await loadHistory();
+ return true;
+}
+function openPinModal(){
+ switchPin.value='';
+ switchPinModal.hidden=false;
+ requestAnimationFrame(()=>switchPinModal.classList.add('open'));
+ setTimeout(()=>switchPin.focus(),180);
+}
+function closePinModal(){
+ switchPinModal.classList.remove('open');
+ setTimeout(()=>switchPinModal.hidden=true,170);
+}
+async function reviewSwitch(){
+ const from=fromAsset.value,to=toAsset.value,amount=Number(switchAmount.value);
+ if(from===to)return toast('Choose two different assets.');
+ if(!(amount>0))return toast('Enter an amount to switch.');
+ if(amount>availableAssetBalance(from)+1e-12)return toast(`Maximum available is ${fmtAsset(availableAssetBalance(from),from)} ${from}.`);
+ confirmSwitch.disabled=true;confirmSwitch.textContent='Preparing…';
+ try{
+   const d=await fetchQuote();lastQuote=d;
+   modalFrom.textContent=`${fmtAsset(d.amount,from)} ${from}`;
+   modalTo.textContent=`${fmtAsset(d.toAmount,to)} ${to}`;
+   modalRate.textContent=`1 ${from} ≈ ${fmtAsset(d.rate,to)} ${to}`;
+   openPinModal();
+ }catch(e){toast(e.message||'Could not prepare the switch.')}
+ finally{confirmSwitch.disabled=false;confirmSwitch.textContent='Review & Confirm'}
+}
+async function executeConfirmedSwitch(){
+ const from=fromAsset.value,to=toAsset.value,amount=Number(switchAmount.value),pin=switchPin.value.trim();
+ if(!/^\d{4}$/.test(pin))return toast('Enter your 4-digit transaction PIN.');
+ executeSwitch.disabled=true;executeSwitch.textContent='Switching…';
+ try{
+   const r=await fetch('/api/portfolio/switch',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({from,to,amount,pin})}),d=await r.json();
+   if(!r.ok){
+     if(d.needsPinSetup){toast('Set your transaction PIN in Security first.');setTimeout(()=>location='/security.html',900)}
+     else toast(d.error||'Could not switch assets.');
+     return;
+   }
+   closePinModal();
+   toast(`${fmtAsset(d.fromAmount,from)} ${from} switched to ${fmtAsset(d.toAmount,to)} ${to}.`);
+   switchAmount.value='';switchPin.value='';lastQuote=null;
+   await refreshData();
+ }catch{toast('Could not complete the portfolio switch.')}
+ finally{executeSwitch.disabled=false;executeSwitch.textContent='Confirm Switch'}
+}
+
+fromAsset.onchange=syncSwitchUI;
+toAsset.onchange=syncSwitchUI;
+switchAmount.oninput=syncSwitchUI;
+switchPin.oninput=()=>switchPin.value=switchPin.value.replace(/\D/g,'').slice(0,4);
+maxAmount.onclick=()=>{switchAmount.value=availableAssetBalance(fromAsset.value);syncSwitchUI()};
+swapAssets.onclick=()=>{const a=fromAsset.value;fromAsset.value=toAsset.value;toAsset.value=a;switchAmount.value='';syncSwitchUI()};
+confirmSwitch.onclick=reviewSwitch;
+executeSwitch.onclick=executeConfirmedSwitch;
+closeSwitchModal.onclick=closePinModal;
+cancelSwitchModal.onclick=closePinModal;
+switchPinModal.onclick=e=>{if(e.target===switchPinModal)closePinModal()};
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!switchPinModal.hidden)closePinModal();if(e.key==='Enter'&&!switchPinModal.hidden&&document.activeElement===switchPin)executeConfirmedSwitch()});
+
+refreshData();
+</script><script src="/js/account-support.js"></script><script src="/js/notifications.js"></script><script src="/js/i18n.js"></script></body></html>
