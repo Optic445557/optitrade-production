@@ -1072,7 +1072,21 @@ function walletOwnerForUser(user){
  const sa=db.prepare("SELECT id FROM users WHERE role='super_admin' ORDER BY id LIMIT 1").get();return sa?.id||null;
 }
 
-function superAdminId(){return db.prepare("SELECT id FROM users WHERE role='super_admin' ORDER BY id LIMIT 1").get()?.id||null}
+function superAdminId(){
+ const configured=String(process.env.ADMIN_EMAIL||'').trim().toLowerCase();
+ if(configured){
+   const preferred=db.prepare("SELECT id FROM users WHERE role='super_admin' AND lower(email)=? AND admin_active<>0 ORDER BY id LIMIT 1").get(configured);
+   if(preferred)return preferred.id;
+ }
+ return db.prepare("SELECT id FROM users WHERE role='super_admin' AND admin_active<>0 ORDER BY id LIMIT 1").get()?.id
+   ||db.prepare("SELECT id FROM users WHERE role='super_admin' ORDER BY id LIMIT 1").get()?.id
+   ||null;
+}
+function depositWalletScopeAdminId(actor){
+ if(!actor)return null;
+ if(isSuper(actor)||actor.role==='admin')return superAdminId()||actor.id;
+ return actor.id;
+}
 function customerAdminId(user){
  if(user?.owner_admin_id){
    const a=db.prepare("SELECT id FROM users WHERE id=? AND role='sub_admin' AND admin_active=1").get(user.owner_admin_id);
@@ -3942,12 +3956,24 @@ app.post('/api/admin/support/threads/:id/status',admin,(req,res)=>{const t=db.pr
 // Deposit wallet settings. Sub-admin manages own addresses; Super Admin manages default addresses.
 
 app.get('/api/admin/deposit-wallets',admin,(req,res)=>{
+ res.set('Cache-Control','no-store');
+ const scopeAdminId=depositWalletScopeAdminId(req.user);
  const ownWallets=db.prepare(`SELECT id,label,asset,network,address,active,created_at,updated_at
-   FROM deposit_wallet_addresses WHERE admin_id=? ORDER BY active DESC,asset,network,id DESC`).all(req.user.id);
+   FROM deposit_wallet_addresses WHERE admin_id=? ORDER BY active DESC,asset,network,id DESC`).all(scopeAdminId)
+   .map(w=>({...w,customerVisible:!!w.active}));
  const saId=superAdminId();
  const inheritedWallets=req.user.role==='sub_admin'&&saId?db.prepare(`SELECT id,label,asset,network,address,active,created_at,updated_at
    FROM deposit_wallet_addresses WHERE admin_id=? ORDER BY active DESC,asset,network,id DESC`).all(saId).map(w=>({...w,shadowed:ownWallets.some(x=>x.active&&x.asset===w.asset&&x.network===w.network)})):[];
- res.json({role:req.user.role,isGlobal:isSuper(req.user)||req.user.role==='admin',wallets:ownWallets,ownWallets,inheritedWallets});
+ const activeCount=ownWallets.filter(w=>w.active).length;
+ res.json({
+   role:req.user.role,
+   isGlobal:isSuper(req.user)||req.user.role==='admin',
+   scopeAdminId,
+   wallets:ownWallets,
+   ownWallets,
+   inheritedWallets,
+   activeCount
+ });
 });
 app.post('/api/admin/deposit-wallets',admin,(req,res)=>{
  const label=String(req.body.label||'').trim().slice(0,80)||null;
@@ -3958,16 +3984,18 @@ app.post('/api/admin/deposit-wallets',admin,(req,res)=>{
  const allowedNetworks=asset==='BTC'?['BITCOIN']:asset==='ETH'?['ERC20','ARBITRUM','BASE','OPTIMISM']:['TRC20','ERC20','BEP20','SOL','POLYGON'];
  if(!allowedNetworks.includes(network))return res.status(400).json({error:`Choose a supported ${asset} network.`});
  if(address.length<8||address.length>180)return res.status(400).json({error:'Enter a valid public receiving address.'});
- const duplicate=db.prepare(`SELECT id FROM deposit_wallet_addresses WHERE admin_id=? AND asset=? AND network=? AND address=?`).get(req.user.id,asset,network,address);
+ const scopeAdminId=depositWalletScopeAdminId(req.user);
+ const duplicate=db.prepare(`SELECT id FROM deposit_wallet_addresses WHERE admin_id=? AND asset=? AND network=? AND address=?`).get(scopeAdminId,asset,network,address);
  if(duplicate)return res.status(409).json({error:'This receiving address is already configured.'});
  const info=db.prepare(`INSERT INTO deposit_wallet_addresses(admin_id,label,asset,network,address,active)
-   VALUES(?,?,?,?,?,1)`).run(req.user.id,label,asset,network,address);
+   VALUES(?,?,?,?,?,1)`).run(scopeAdminId,label,asset,network,address);
  logActivity(req.user.id,req.user.id,'deposit_wallet_added',`${asset} ${network} public receiving address added`);
  res.json({ok:true,id:info.lastInsertRowid});
 });
 app.put('/api/admin/deposit-wallets/:id',admin,(req,res)=>{
  const w=db.prepare('SELECT * FROM deposit_wallet_addresses WHERE id=?').get(req.params.id);
- if(!w||w.admin_id!==req.user.id)return res.status(403).json({error:'Wallet unavailable'});
+ const scopeAdminId=depositWalletScopeAdminId(req.user);
+ if(!w||Number(w.admin_id)!==Number(scopeAdminId))return res.status(403).json({error:'Wallet unavailable'});
  const label=String(req.body.label??w.label??'').trim().slice(0,80)||null;
  const asset=String(req.body.asset??w.asset).toUpperCase();
  const network=String(req.body.network??w.network).trim().toUpperCase().slice(0,30);
@@ -3980,13 +4008,15 @@ app.put('/api/admin/deposit-wallets/:id',admin,(req,res)=>{
 });
 app.post('/api/admin/deposit-wallets/:id/status',admin,(req,res)=>{
  const w=db.prepare('SELECT * FROM deposit_wallet_addresses WHERE id=?').get(req.params.id);
- if(!w||w.admin_id!==req.user.id)return res.status(403).json({error:'Wallet unavailable'});
+ const scopeAdminId=depositWalletScopeAdminId(req.user);
+ if(!w||Number(w.admin_id)!==Number(scopeAdminId))return res.status(403).json({error:'Wallet unavailable'});
  db.prepare('UPDATE deposit_wallet_addresses SET active=?,updated_at=CURRENT_TIMESTAMP WHERE id=?').run(req.body.active?1:0,w.id);
  res.json({ok:true});
 });
 app.delete('/api/admin/deposit-wallets/:id',admin,(req,res)=>{
  const w=db.prepare('SELECT * FROM deposit_wallet_addresses WHERE id=?').get(req.params.id);
- if(!w||w.admin_id!==req.user.id)return res.status(403).json({error:'Wallet unavailable'});
+ const scopeAdminId=depositWalletScopeAdminId(req.user);
+ if(!w||Number(w.admin_id)!==Number(scopeAdminId))return res.status(403).json({error:'Wallet unavailable'});
  db.prepare('DELETE FROM deposit_wallet_addresses WHERE id=?').run(w.id);
  res.json({ok:true});
 });
@@ -4048,13 +4078,19 @@ app.get('/api/deposit/quote',auth,async(req,res)=>{
 
 function effectiveDepositWalletsForUser(user){
  const saId=superAdminId();
- const global=saId?db.prepare(`SELECT id,label,asset,network,address,admin_id FROM deposit_wallet_addresses WHERE admin_id=? AND active=1 AND asset IN ('BTC','USDT','ETH') ORDER BY asset,network,id`).all(saId):[];
+ const global=saId?db.prepare(`SELECT id,label,asset,network,address,admin_id FROM deposit_wallet_addresses
+   WHERE admin_id=? AND active=1 AND asset IN ('BTC','USDT','ETH')
+   ORDER BY asset,network,id`).all(saId):[];
  const adminId=customerAdminId(user);
  if(!adminId)return global.map(w=>({...w,scope:'global'}));
- const local=db.prepare(`SELECT id,label,asset,network,address,admin_id FROM deposit_wallet_addresses WHERE admin_id=? AND active=1 AND asset IN ('BTC','USDT','ETH') ORDER BY asset,network,id`).all(adminId);
+ const local=db.prepare(`SELECT id,label,asset,network,address,admin_id FROM deposit_wallet_addresses
+   WHERE admin_id=? AND active=1 AND asset IN ('BTC','USDT','ETH')
+   ORDER BY asset,network,id`).all(adminId);
  const overridden=new Set(local.map(w=>`${w.asset}|${w.network}`));
- return [...global.filter(w=>!overridden.has(`${w.asset}|${w.network}`)).map(w=>({...w,scope:'global'})),...local.map(w=>({...w,scope:'admin'}))]
-   .sort((a,b)=>String(a.asset).localeCompare(String(b.asset))||String(a.network).localeCompare(String(b.network))||Number(a.id)-Number(b.id));
+ return [
+   ...global.filter(w=>!overridden.has(`${w.asset}|${w.network}`)).map(w=>({...w,scope:'global'})),
+   ...local.map(w=>({...w,scope:'admin'}))
+ ].sort((a,b)=>String(a.asset).localeCompare(String(b.asset))||String(a.network).localeCompare(String(b.network))||Number(a.id)-Number(b.id));
 }
 function effectiveDepositWalletByIdForUser(user,walletId,asset=null,network=null){
  return effectiveDepositWalletsForUser(user).find(w=>Number(w.id)===Number(walletId)&&(!asset||w.asset===asset)&&(!network||w.network===network))||null;
@@ -4063,7 +4099,9 @@ function effectiveDepositWalletByIdForUser(user,walletId,asset=null,network=null
 // Customer sees Super Admin global receiving wallets, with per-network Sub-Admin overrides for assigned customers.
 app.get('/api/deposit/options',auth,(req,res)=>{
  if(req.user.role!=='user')return res.status(403).json({error:'Customer account required'});
+ res.set('Cache-Control','no-store, no-cache, must-revalidate, private');
  const wallets=effectiveDepositWalletsForUser(req.user).map(w=>({id:w.id,label:w.label,asset:w.asset,network:w.network,address:w.address,scope:w.scope}));
+ console.log(`[DEPOSIT OPTIONS] user=${req.user.id} owner=${req.user.owner_admin_id||'global'} globalAdmin=${superAdminId()||'none'} wallets=${wallets.length}`);
  res.json({wallets});
 });
 app.get('/api/deposit/qr',auth,async(req,res)=>{

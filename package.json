@@ -1,6 +1,6 @@
 {
   "name": "optiprotrade",
-  "version": "2.11.20",
+  "version": "2.11.22",
   "private": true,
   "scripts": {
     "start": "node server/app.js",
