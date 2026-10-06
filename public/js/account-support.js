@@ -1,6 +1,6 @@
 (function(){
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-let me=null, chatOpen=false, lastState='', poll=null, quickHelpExpanded=false, welcomeExpanded=false;
+let me=null, chatOpen=false, lastState='', poll=null, quickHelpExpanded=false;
 const initials=n=>String(n||'User').trim().split(/\s+/).slice(0,2).map(x=>x[0]).join('').toUpperCase();
 const money=n=>'$'+Number(n||0).toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2});
 function portfolio(d){let b=Object.fromEntries((d.balances||[]).map(x=>[x.asset,Number(x.amount)]));return (b.USD||0)+(b.USDT||0);}
@@ -34,7 +34,14 @@ function quickHelpHtml(faqs,answeredCount,totalFaqs){
    const previewCount=3;
    const visibleFaqs=faqs.slice(0,previewCount);
    const extraFaqs=faqs.slice(previewCount);
-   const buttonHtml=f=>`<button type="button" class="ot-quick-btn${Number(f.answered)?' viewed':''}" data-faq-id="${Number(f.id)}" data-faq-scope="${esc(f.scope||'global')}">${esc(f.question)}<span>${Number(f.answered)?'↻':'›'}</span></button>`;
+   const buttonHtml=f=>{
+     const viewed=Number(f.answered)===1;
+     return `<button type="button" class="ot-quick-btn${viewed?' viewed':''}" data-faq-id="${Number(f.id)}" data-faq-scope="${esc(f.scope||'global')}">
+       <span class="ot-quick-icon">${viewed?'↻':'?'}</span>
+       <span class="ot-quick-copy"><b>${esc(f.question)}</b><small>${viewed?'View answer again':'Quick answer'}</small></span>
+       <span class="ot-quick-arrow">›</span>
+     </button>`;
+   };
    const firstThree=visibleFaqs.map(buttonHtml).join('');
    const extras=extraFaqs.map(buttonHtml).join('');
    const dropdown=extraFaqs.length?`
@@ -44,31 +51,29 @@ function quickHelpHtml(faqs,answeredCount,totalFaqs){
      </button>
      <div class="ot-quick-more-list" ${quickHelpExpanded?'':'hidden'}>${extras}</div>`:'';
    return `<section class="ot-quick-help${quickHelpExpanded?' expanded':''}">
-     <div class="ot-quick-title"><b>How can I help?</b><small>Choose one of the 3 quick questions below or open See more questions.</small></div>
+     <div class="ot-quick-title"><span class="ot-quick-title-icon">?</span><div><b>Quick questions</b><small>Choose one for an instant answer, or type your own message below.</small></div></div>
      <div class="ot-quick-list">${firstThree}</div>
      ${dropdown}
-     ${answeredCount?`<small class="ot-quick-progress">${answeredCount} quick answer${answeredCount===1?'':'s'} viewed • ${Math.max(0,totalFaqs-answeredCount)} remaining</small>`:''}
+     ${answeredCount?`<small class="ot-quick-progress">${answeredCount} quick answer${answeredCount===1?'':'s'} viewed</small>`:''}
    </section>`;
  }
  return '';
 }
-function compactWelcomeHtml(welcome){
- if(!welcome?.body)return '';
- const body=String(welcome.body||'').trim();
- return `<section class="ot-support-welcome${welcomeExpanded?' expanded':''}">
-   <div class="ot-support-welcome-head"><div><b>${esc(welcome.title||'Welcome to OptiTrade Support')}</b><small>Quick guidance is always available here.</small></div><button type="button" data-welcome-toggle>${welcomeExpanded?'Hide':'View welcome'}</button></div>
-   <div class="ot-support-welcome-body">${esc(body)}</div>
- </section>`;
-}
+
 function renderMessages(msgs,faqs=[],answeredCount=0,totalFaqs=0,welcome=null){
  const body=document.querySelector('.ot-chat-body'); if(!body)return;
- const messages=msgs.map(m=>`<div class="ot-msg ${m.sender_role==='user'?'user':'support'} ${m.kind==='faq_answer'?'quick-answer':''}">${m.kind==='faq_answer'?'<small class="ot-auto-label">Quick answer</small>':''}${esc(m.body)}${m.kind==='welcome'?`<div class="ot-welcome-actions"><a href="/profile.html">Complete Profile</a><a href="/markets.html">Explore Markets</a><a href="/trade.html">Start Trading</a></div>`:''}<time>${new Date((m.created_at||'').replace(' ','T')+'Z').toLocaleString()}</time></div>`).join('');
- body.innerHTML=messages+compactWelcomeHtml(welcome)+quickHelpHtml(faqs,answeredCount,totalFaqs);
- const welcomeToggle=body.querySelector('[data-welcome-toggle]');
- if(welcomeToggle)welcomeToggle.onclick=()=>{
-   welcomeExpanded=!welcomeExpanded;
-   renderMessages(msgs,faqs,answeredCount,totalFaqs,welcome);
- };
+ const welcomeMsg=msgs.find(m=>m.kind==='welcome');
+ const rest=msgs.filter(m=>m!==welcomeMsg);
+ const messageHtml=m=>`<div class="ot-msg ${m.sender_role==='user'?'user':'support'} ${m.kind==='faq_answer'?'quick-answer':''} ${m.kind==='welcome'?'welcome-message':''}">
+   ${m.kind==='faq_answer'?'<small class="ot-auto-label">Quick answer</small>':''}
+   ${esc(m.body)}
+   ${m.kind==='welcome'?`<div class="ot-welcome-actions"><a href="/profile.html">Complete Profile</a><a href="/markets.html">Explore Markets</a><a href="/trade.html">Start Trading</a></div>`:''}
+   <time>${new Date((m.created_at||'').replace(' ','T')+'Z').toLocaleString()}</time>
+ </div>`;
+ const welcomeHtml=welcomeMsg?messageHtml(welcomeMsg):'';
+ const conversationHtml=rest.map(messageHtml).join('');
+ // Keep one welcome message, then the compact quick-question panel, then the conversation.
+ body.innerHTML=welcomeHtml+quickHelpHtml(faqs,answeredCount,totalFaqs)+conversationHtml;
  const quickToggle=body.querySelector('[data-quick-toggle]');
  if(quickToggle)quickToggle.onclick=()=>{
    quickHelpExpanded=!quickHelpExpanded;
@@ -78,7 +83,7 @@ function renderMessages(msgs,faqs=[],answeredCount=0,totalFaqs=0,welcome=null){
  };
  body.querySelectorAll('[data-faq-id]').forEach(btn=>btn.onclick=async()=>{
    const id=Number(btn.dataset.faqId),scope=btn.dataset.faqScope==='admin'?'admin':'global';if(!id)return;
-   btn.disabled=true;const original=btn.innerHTML;btn.innerHTML='Getting answer…';
+   btn.disabled=true;const original=btn.innerHTML;btn.innerHTML='<span class="ot-quick-loading">Getting answer…</span>';
    try{
      const r=await fetch('/api/support/faq/'+scope+'/'+id,{method:'POST'});
      const d=await r.json().catch(()=>({}));
@@ -87,7 +92,9 @@ function renderMessages(msgs,faqs=[],answeredCount=0,totalFaqs=0,welcome=null){
      await loadThread(true);
    }catch(e){btn.disabled=false;btn.innerHTML=original;appAlert(e.message)}
  });
- body.scrollTop=body.scrollHeight;
+ // On first open, keep the welcome + quick questions visible instead of jumping to the very bottom.
+ if(rest.length>1) body.scrollTop=body.scrollHeight;
+ else body.scrollTop=0;
 }
 async function loadThread(force=false){
  try{

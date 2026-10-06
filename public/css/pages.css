@@ -472,3 +472,211 @@ html[dir="rtl"] .ot-language-box{right:auto;left:14px}
     grid-template-columns:1fr !important;
   }
 }
+
+/* v2.11.21 — Help Center polish: one welcome + distinct blue quick questions */
+.ot-chat-body{
+  padding:12px !important;
+  gap:10px !important;
+}
+.ot-msg.welcome-message{
+  border:1px solid #2a6b9e !important;
+  background:linear-gradient(145deg,#173456,#102b49) !important;
+  box-shadow:0 10px 24px rgba(0,0,0,.18) !important;
+}
+.ot-welcome-actions{
+  display:flex !important;
+  gap:7px !important;
+  flex-wrap:wrap !important;
+  margin-top:12px !important;
+}
+.ot-welcome-actions a{
+  text-decoration:none !important;
+  color:#eaf8ff !important;
+  background:linear-gradient(135deg,#116fc6,#1b8cff) !important;
+  border:1px solid #49b6ff !important;
+  border-radius:999px !important;
+  padding:7px 11px !important;
+  font-size:10px !important;
+  font-weight:850 !important;
+  box-shadow:0 5px 14px rgba(18,112,205,.24) !important;
+}
+.ot-support-welcome{
+  display:none !important;
+}
+.ot-quick-help{
+  margin:0 !important;
+  padding:12px !important;
+  border:1px solid #2468a6 !important;
+  border-radius:16px !important;
+  background:
+    radial-gradient(circle at 90% 0%,rgba(33,142,255,.18),transparent 42%),
+    linear-gradient(145deg,#0c2037,#08182a) !important;
+  box-shadow:0 12px 28px rgba(0,0,0,.20) !important;
+}
+.ot-quick-title{
+  display:flex !important;
+  align-items:center !important;
+  gap:9px !important;
+  margin-bottom:10px !important;
+}
+.ot-quick-title-icon{
+  width:30px !important;
+  height:30px !important;
+  min-width:30px !important;
+  border-radius:10px !important;
+  display:grid !important;
+  place-items:center !important;
+  background:linear-gradient(135deg,#17b9ff,#176cff) !important;
+  color:white !important;
+  font-size:16px !important;
+  font-weight:950 !important;
+  box-shadow:0 7px 18px rgba(23,108,255,.30) !important;
+}
+.ot-quick-title>div{
+  min-width:0 !important;
+}
+.ot-quick-title b{
+  display:block !important;
+  color:#f3fbff !important;
+  font-size:13px !important;
+  line-height:1.2 !important;
+}
+.ot-quick-title small{
+  display:block !important;
+  margin-top:3px !important;
+  color:#8faac1 !important;
+  font-size:9px !important;
+  line-height:1.35 !important;
+}
+.ot-quick-list,
+.ot-quick-more-list{
+  display:grid !important;
+  grid-template-columns:1fr !important;
+  gap:8px !important;
+}
+.ot-quick-btn{
+  width:100% !important;
+  min-height:54px !important;
+  padding:9px 10px !important;
+  border:1px solid #45a9ff !important;
+  border-radius:13px !important;
+  background:linear-gradient(135deg,#0c70c8,#0a54a2) !important;
+  color:#fff !important;
+  display:grid !important;
+  grid-template-columns:32px minmax(0,1fr) 20px !important;
+  align-items:center !important;
+  gap:9px !important;
+  text-align:left !important;
+  box-shadow:0 7px 18px rgba(0,94,190,.22) !important;
+  cursor:pointer !important;
+}
+.ot-quick-btn:hover,
+.ot-quick-btn:focus{
+  border-color:#8dd3ff !important;
+  background:linear-gradient(135deg,#1083e5,#0c62b7) !important;
+  transform:translateY(-1px) !important;
+}
+.ot-quick-btn.viewed{
+  border-color:#367eb7 !important;
+  background:linear-gradient(135deg,#0a568f,#0a4475) !important;
+}
+.ot-quick-icon{
+  width:30px !important;
+  height:30px !important;
+  border-radius:9px !important;
+  display:grid !important;
+  place-items:center !important;
+  background:rgba(255,255,255,.14) !important;
+  border:1px solid rgba(255,255,255,.18) !important;
+  color:#fff !important;
+  font-size:14px !important;
+  font-weight:950 !important;
+}
+.ot-quick-copy{
+  min-width:0 !important;
+}
+.ot-quick-copy b{
+  display:block !important;
+  color:#fff !important;
+  font-size:10.5px !important;
+  line-height:1.3 !important;
+  font-weight:850 !important;
+}
+.ot-quick-copy small{
+  display:block !important;
+  margin-top:3px !important;
+  color:#c6e9ff !important;
+  font-size:8px !important;
+  font-weight:700 !important;
+}
+.ot-quick-arrow{
+  color:#e8f8ff !important;
+  font-size:20px !important;
+  line-height:1 !important;
+}
+.ot-quick-more{
+  width:100% !important;
+  margin-top:8px !important;
+  padding:9px 11px !important;
+  border:1px solid #295e8d !important;
+  border-radius:12px !important;
+  background:#0a1a2b !important;
+  color:#dcefff !important;
+  display:flex !important;
+  align-items:center !important;
+  justify-content:space-between !important;
+  text-align:left !important;
+  cursor:pointer !important;
+}
+.ot-quick-more b{
+  color:#dff5ff !important;
+  font-size:10px !important;
+}
+.ot-quick-more small{
+  color:#729abd !important;
+  font-size:8px !important;
+}
+.ot-quick-more i{
+  color:#55cfff !important;
+  font-size:17px !important;
+  transition:transform .2s ease !important;
+}
+.ot-quick-more.open i{
+  transform:rotate(180deg) !important;
+}
+.ot-quick-more-list[hidden]{
+  display:none !important;
+}
+.ot-quick-more-list{
+  margin-top:8px !important;
+  padding-top:8px !important;
+  border-top:1px solid #183b5c !important;
+}
+.ot-quick-progress{
+  display:block !important;
+  margin-top:7px !important;
+  color:#607d98 !important;
+  font-size:8px !important;
+  text-align:right !important;
+}
+.ot-quick-loading{
+  grid-column:1/-1 !important;
+  color:#fff !important;
+  font-weight:800 !important;
+  text-align:center !important;
+}
+.ot-auto-label{
+  background:#0d5b96 !important;
+  color:#dff5ff !important;
+  border:1px solid #2f8ed0 !important;
+}
+@media(min-width:760px){
+  .ot-quick-list,.ot-quick-more-list{
+    grid-template-columns:repeat(3,minmax(0,1fr)) !important;
+  }
+}
+@media(max-width:520px){
+  .ot-chat-body{padding:10px !important}
+  .ot-quick-help{padding:10px !important}
+  .ot-quick-btn{min-height:52px !important}
+}

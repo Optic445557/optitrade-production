@@ -2141,6 +2141,7 @@ async function sendOutboundEmail(email,subject,text,{html=null,category='transac
  let apiError=null;
  const recordSuccess=result=>{
   logEmailDelivery({userId,category,email,provider:result.provider,status:result.dev?'dev':'accepted',messageId:result.id||null,reference});
+  console.log(`[EMAIL ACCEPTED] category=${String(category||'transactional')} recipient=${emailRecipientMask(email)} provider=${result.provider||'unknown'} message=${result.id||'none'}`);
   return result;
  };
  const recordFailure=(error,providerName=null)=>{
@@ -2608,11 +2609,13 @@ app.post('/api/auth/login',async(req,res)=>{
    return res.status(403).json({error:'Verify your email first',needsVerification:true,email:u.email});
  if(isStaff(u)&&u.admin_active===0)
    return res.status(403).json({error:'This admin account is inactive.'});
+ console.log(`[LOGIN OTP REQUEST] user=${u.id} role=${u.role} recipient=${emailRecipientMask(u.email)}`);
  const c=createLoginChallenge(u.id);
  try{
-   await sendLoginOtp(u.email,c.code,u,c.challengeHash);
+   const delivery=await sendLoginOtp(u.email,c.code,u,c.challengeHash);
+   console.log(`[LOGIN OTP SENT] user=${u.id} role=${u.role} recipient=${emailRecipientMask(u.email)} provider=${delivery?.provider||'unknown'} message=${delivery?.id||'none'}`);
  }catch(e){
-   console.error('[LOGIN OTP EMAIL]',e.message);
+   console.error(`[LOGIN OTP FAILED] user=${u.id} role=${u.role} recipient=${emailRecipientMask(u.email)} error=${e.message}`);
    db.prepare('UPDATE login_otp_challenges SET used=1 WHERE challenge_hash=?').run(c.challengeHash);
    db.prepare('DELETE FROM test_login_otp_codes WHERE challenge_hash=?').run(c.challengeHash);
    return res.status(503).json({error:'Your login code could not be sent. Check Email Delivery settings or try again shortly.'});
@@ -2658,8 +2661,13 @@ app.post('/api/auth/login/resend',async(req,res)=>{
  if(Number(c.resend_count||0)>=5)
    return res.status(429).json({error:'Too many login code requests. Return to login and start again.'});
  const code=String(crypto.randomInt(100000,1000000)),expiresAt=Date.now()+600000;
- try{await sendLoginOtp(c.email,code,{...c,id:c.user_id},challengeHash)}
- catch(e){console.error('[LOGIN OTP RESEND]',e.message);return res.status(503).json({error:'Could not resend the login code right now.'})}
+ try{
+   const delivery=await sendLoginOtp(c.email,code,{...c,id:c.user_id},challengeHash);
+   console.log(`[LOGIN OTP RESEND SENT] user=${c.user_id} role=${c.role} recipient=${emailRecipientMask(c.email)} provider=${delivery?.provider||'unknown'} message=${delivery?.id||'none'}`);
+ }catch(e){
+   console.error(`[LOGIN OTP RESEND FAILED] user=${c.user_id} role=${c.role} recipient=${emailRecipientMask(c.email)} error=${e.message}`);
+   return res.status(503).json({error:'Could not resend the login code right now.'});
+ }
  db.prepare(`UPDATE login_otp_challenges SET code_hash=?,expires_at=?,attempts=0,resend_count=resend_count+1,last_sent_at=? WHERE id=?`)
    .run(otpCodeHash('login',c.user_id,code,challengeHash),expiresAt,Date.now(),c.id);
  saveTestLoginOtp(challengeHash,c.user_id,code,expiresAt);
