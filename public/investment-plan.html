@@ -1,0 +1,69 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Investment Plan | OptiProTrade</title><link rel="stylesheet" href="/css/pages.css"></head><body>
+<header class="top"><a class="logo" href="/dashboard.html">↗ Opti<i>Trade</i></a><div class="top-right"><a class="pill" href="/markets.html">● Markets</a><a class="pill" href="/profile.html" data-user-name>Account</a><button class="icon" data-logout title="Logout">↪</button></div></header>
+<main class="shell"><a class="back" href="/investments.html">← Back to Investment Plans</a>
+<section class="plan-detail-hero"><div><div class="eyebrow">INVESTMENT PLAN</div><h1 id="planName">Loading…</h1><p id="planDescription">Loading plan details…</p><div class="plan-detail-tags"><span id="planRisk">—</span><span id="planFocus">—</span></div></div><div class="plan-minimum"><span>Minimum allocation</span><b id="planMinimum">—</b><small>USD reference equivalent</small></div></section>
+<section class="grid plan-detail-grid">
+<article class="card span5"><h2>Plan Terms</h2><p class="muted">Choose a period configured for this strategy.</p><div id="durationOptions" class="duration-options"></div><div class="plan-term-result"><span>Selected target range</span><b id="termTarget">Select a period</b><small>Targets are estimates and are not guaranteed.</small></div></article>
+<article class="card span7"><div class="section-head"><div><h2>Allocation Calculator</h2><p class="muted">Choose any wallet that has an available balance. The amount is reserved from that selected wallet when you submit.</p></div><span class="pill-soft">REFERENCE VALUE</span></div>
+<div class="allocation-grid"><div class="field"><label>Funding wallet</label><select id="fundingAsset"><option>Loading balances…</option></select><small class="muted" id="assetBalance">Available: —</small></div><div class="field"><label>Investment amount</label><div class="amount-row"><input id="fundingAmount" type="number" min="0" step="any" inputmode="decimal" placeholder="Enter amount"><button class="btn ghost" id="maxFunding" type="button">MAX</button></div><small class="muted">Choose any wallet balance, enter an amount, or use MAX.</small></div></div>
+<div class="investment-quote"><div><span>Reference allocation</span><b id="quoteUsd">—</b></div><div><span>Selected period</span><b id="quoteDuration">—</b></div><div><span>Target outcome range</span><b id="quoteOutcome">—</b></div><small id="quoteNote">Enter an amount and choose a period.</small></div>
+<div class="field" style="margin-top:14px"><label>Optional note</label><textarea id="customerNote" rows="3" maxlength="500" placeholder="Anything you want the plan administrator to know"></textarea></div>
+<button class="btn primary plan-submit-btn" id="reviewPlan" type="button">Review Investment Request</button>
+</article></section>
+<section class="card"><h2>Before you submit</h2><p class="muted">Choose the wallet you want to fund from. When you submit, that amount moves from the selected wallet into Investment Reserve while the administrator reviews it. If the request is cancelled or declined, the same asset returns to the same wallet.</p></section>
+</main>
+
+<div class="switch-modal-backdrop" id="planPinModal" hidden><div class="switch-pin-modal" role="dialog" aria-modal="true"><button class="switch-modal-close" id="closePlanModal" type="button">×</button><div class="switch-modal-icon">◎</div><div class="eyebrow">CONFIRM REQUEST</div><h2>Confirm Investment Plan</h2><p class="muted">Review the request summary and enter your 4-digit transaction PIN.</p><div class="plan-confirm-summary"><div><span>Plan</span><b id="confirmPlanName">—</b></div><div><span>Allocation</span><b id="confirmAllocation">—</b></div><div><span>Period</span><b id="confirmDuration">—</b></div><div><span>Target range</span><b id="confirmTarget">—</b></div></div><div class="field switch-pin-field"><label>Transaction PIN</label><input id="planPin" type="password" inputmode="numeric" maxlength="4" autocomplete="off" placeholder="••••"></div><div class="switch-modal-actions"><button class="btn ghost" id="cancelPlanModal" type="button">Cancel</button><button class="btn primary" id="submitPlan" type="button">Submit Request</button></div></div></div>
+
+<nav class="bottom"><a href="/dashboard.html"><span>▦</span> Home</a><a href="/deposit.html"><span>⊕</span> Deposit</a><a href="/trade.html"><span>↗</span> Trade</a><a href="/profile.html"><span>♙</span> Profile</a><a href="/support.html"><span>◉</span> Support</a></nav><div id="toast" class="toast"></div>
+<script src="/js/pages.js"></script><script>
+let plan=null,selectedDuration=null,lastQuote=null,availability={};
+const planId=Number(new URLSearchParams(location.search).get('id'));
+const fmtAsset=(v,a)=>a==='USD'?('$'+Number(v||0).toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2})):a==='USDT'?Number(v||0).toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:6}):Number(v||0).toLocaleString(undefined,{maximumFractionDigits:10});
+const supportedFundingAssets=['USD','USDT','BTC','ETH'];
+async function loadAvailability(){
+ try{
+   const r=await fetch('/api/withdrawal/status',{cache:'no-store'}),d=await r.json();
+   if(r.ok)availability=Object.fromEntries((d.assets||[]).filter(x=>supportedFundingAssets.includes(String(x.asset||'').toUpperCase())).map(x=>[String(x.asset).toUpperCase(),x]));
+ }catch{}
+}
+function available(a){return Number(availability?.[a]?.available||0)}
+function fundingAssetName(a){return a==='USD'?'Available Balance (USD)':a==='USDT'?'USDT Wallet':a==='BTC'?'Bitcoin Wallet':a==='ETH'?'Ethereum Wallet':a}
+function fundingBalanceLabel(a){const n=available(a);return a==='USD'?money(n):`${fmtAsset(n,a)} ${a}`}
+function renderFundingWallets(preferred){
+ const existing=preferred||fundingAsset.value;
+ const assets=supportedFundingAssets.filter(a=>availability[a]);
+ assets.sort((a,b)=>(available(b)>0)-(available(a)>0)||supportedFundingAssets.indexOf(a)-supportedFundingAssets.indexOf(b));
+ fundingAsset.innerHTML=assets.length
+   ?assets.map(a=>`<option value="${a}">${fundingAssetName(a)} — ${fundingBalanceLabel(a)}</option>`).join('')
+   :'<option value="">No funding wallet available</option>';
+ if(existing&&assets.includes(existing))fundingAsset.value=existing;
+ else if(assets.length)fundingAsset.value=assets.find(a=>available(a)>0)||assets[0];
+ fundingAsset.disabled=!assets.length;
+ syncAsset();
+}
+function maxValueForAsset(a){
+ const n=available(a);
+ if(a==='USD')return Math.floor(n*100)/100;
+ if(a==='USDT')return Math.floor(n*1e6)/1e6;
+ return Math.floor(n*1e10)/1e10;
+}
+function targetLabel(t){if(!t)return 'Not configured';if(t.target_min_pct==null&&t.target_max_pct==null)return 'Target range not configured';const lo=t.target_min_pct??t.target_max_pct,hi=t.target_max_pct??t.target_min_pct;return `${Number(lo).toLocaleString()}% – ${Number(hi).toLocaleString()}%`}
+function paintPlan(){planName.textContent=plan.name;planDescription.textContent=plan.description;planRisk.textContent=plan.risk_level+' risk';planFocus.textContent=plan.market_focus;planMinimum.textContent=money(plan.min_usd);durationOptions.innerHTML=(plan.terms||[]).map(t=>`<button type="button" class="duration-chip" data-days="${t.duration_days}"><b>${t.duration_days}</b><span>days</span><small>${targetLabel(t)}</small></button>`).join('');document.querySelectorAll('.duration-chip').forEach(b=>b.onclick=()=>{selectedDuration=Number(b.dataset.days);document.querySelectorAll('.duration-chip').forEach(x=>x.classList.toggle('active',x===b));const t=plan.terms.find(x=>Number(x.duration_days)===selectedDuration);termTarget.textContent=targetLabel(t);quoteDuration.textContent=selectedDuration+' days';prepareQuote()});renderFundingWallets()}
+function syncAsset(){
+ const a=fundingAsset.value;
+ assetBalance.textContent=a?`Available: ${fundingBalanceLabel(a)}`:'Available: —';
+ fundingAmount.step=a==='USD'?'0.01':a==='USDT'?'0.000001':'0.00000001';
+ fundingAmount.placeholder=a==='USD'?'Enter USD amount':a?`Enter ${a} amount`:'Enter amount';
+ lastQuote=null;quoteUsd.textContent='—';quoteOutcome.textContent='—';quoteNote.textContent='Enter an amount and choose a period.';
+}
+let qt=null;function prepareQuote(){clearTimeout(qt);qt=setTimeout(loadQuote,250)}
+async function loadQuote(){const amount=Number(fundingAmount.value);if(!(amount>0)||!selectedDuration)return;try{const r=await fetch(`/api/investment-plans/${plan.id}/quote?asset=${encodeURIComponent(fundingAsset.value)}&amount=${encodeURIComponent(amount)}&duration=${selectedDuration}`,{cache:'no-store'}),d=await r.json();if(!r.ok)throw new Error(d.error||'Quote unavailable');lastQuote=d;quoteUsd.textContent=money(d.usdValue);quoteOutcome.textContent=d.projectedLowUsd==null&&d.projectedHighUsd==null?'Target range not configured':`${money(d.projectedLowUsd??d.projectedHighUsd)} – ${money(d.projectedHighUsd??d.projectedLowUsd)}`;quoteNote.textContent=fundingAsset.value==='USD'?`Funded directly from Available Balance • updated ${new Date(d.updatedAt).toLocaleTimeString()}`:`Reference ${fundingAsset.value} price ${money(d.assetUsdPrice)} • updated ${new Date(d.updatedAt).toLocaleTimeString()}`}catch(e){lastQuote=null;quoteUsd.textContent='—';quoteOutcome.textContent='—';quoteNote.textContent=e.message}}
+function openModal(){planPin.value='';confirmPlanName.textContent=plan.name;confirmAllocation.textContent=`${fmtAsset(lastQuote.amount,lastQuote.asset)} ${lastQuote.asset} • ${money(lastQuote.usdValue)} reference`;confirmDuration.textContent=selectedDuration+' days';confirmTarget.textContent=lastQuote.projectedLowUsd==null&&lastQuote.projectedHighUsd==null?'Not configured':`${money(lastQuote.projectedLowUsd??lastQuote.projectedHighUsd)} – ${money(lastQuote.projectedHighUsd??lastQuote.projectedLowUsd)}`;planPinModal.hidden=false;requestAnimationFrame(()=>planPinModal.classList.add('open'));setTimeout(()=>planPin.focus(),180)}
+function closeModal(){planPinModal.classList.remove('open');setTimeout(()=>planPinModal.hidden=true,170)}
+fundingAsset.onchange=()=>{fundingAmount.value='';syncAsset();prepareQuote()};fundingAmount.oninput=prepareQuote;maxFunding.onclick=()=>{const a=fundingAsset.value;if(!a)return;fundingAmount.value=maxValueForAsset(a);prepareQuote()};planPin.oninput=()=>planPin.value=planPin.value.replace(/\D/g,'').slice(0,4);
+reviewPlan.onclick=async()=>{if(!selectedDuration)return toast('Choose a plan period.');if(!(Number(fundingAmount.value)>0))return toast('Enter a funding amount.');await loadQuote();if(!lastQuote)return;openModal()};
+submitPlan.onclick=async()=>{if(!/^\d{4}$/.test(planPin.value))return toast('Enter your 4-digit transaction PIN.');const selectedAsset=fundingAsset.value;if(!selectedAsset)return toast('Choose a funding wallet.');submitPlan.disabled=true;submitPlan.textContent='Submitting…';try{const amount=Number(fundingAmount.value);const r=await fetch(`/api/investment-plans/${plan.id}/request`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({asset:selectedAsset,amount,duration:selectedDuration,pin:planPin.value,note:customerNote.value.trim()})}),d=await r.json();if(!r.ok){if(d.needsPinSetup)setTimeout(()=>location='/security.html',900);return toast(d.error||'Could not submit investment request.')}const current=availability[selectedAsset]||{};availability[selectedAsset]={...current,available:Number(d.availableBalanceAfter||0),balance:Math.max(0,Number(current.balance||0)-amount)};renderFundingWallets(selectedAsset);closeModal();toast(`Investment request ${d.reference} submitted. ${fundingBalanceLabel(selectedAsset)} remains available in ${selectedAsset}.`);setTimeout(()=>location='/investments.html',1300)}catch{toast('Could not submit investment request.')}finally{submitPlan.disabled=false;submitPlan.textContent='Submit Request'}};
+closePlanModal.onclick=cancelPlanModal.onclick=closeModal;planPinModal.onclick=e=>{if(e.target===planPinModal)closeModal()};
+(async()=>{if(!await auth())return;if(!planId)return location='/investments.html';await Promise.all([loadAvailability(),markets()]);const r=await fetch('/api/investment-plans/'+planId,{cache:'no-store'}),d=await r.json();if(!r.ok){toast(d.error||'Plan unavailable');return setTimeout(()=>location='/investments.html',900)}plan=d.plan;paintPlan()})();
+</script><script src="/js/account-support.js"></script><script src="/js/notifications.js"></script><script src="/js/i18n.js"></script></body></html>

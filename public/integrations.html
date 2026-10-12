@@ -1,0 +1,68 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Wallet Connections | OptiTrade</title><link rel="stylesheet" href="/css/pages.css"></head><body>
+<header class="top"><a class="logo" href="/dashboard.html">↗ Opti<i>Trade</i></a><div class="top-right"><a class="pill" href="/markets.html">● Markets</a><a class="pill" href="/profile.html" data-user-name>Account</a><button class="icon" data-logout title="Logout">↪</button></div></header>
+<main class="shell"><a class="back" href="/dashboard.html">← Back to dashboard</a>
+<section class="hero"><div><div class="eyebrow">MULTI-CHAIN WALLET CONNECTIONS</div><h1>Connect Your Crypto Wallet</h1><p>Link supported EVM, Bitcoin, Solana and TRON wallets without giving OptiTrade a seed phrase or private key.</p></div></section>
+
+<section class="card multiwallet-overview">
+  <div class="integration-head"><div class="integration-brand"><span class="integration-icon wallet-icon">◇</span><div><h2>Wallet Connection Center</h2><p class="muted">Read-only connection information and balances. Signing stays inside the wallet.</p></div></div><span class="connection-state" id="walletState">Not connected</span></div>
+  <div class="wallet-local-status"><span><i></i> <b id="walletProjectStatus">Loading wallet services…</b></span><span id="walletRelayStatus">Ready for browser wallets</span></div>
+  <div class="notice compact-notice"><b>User-controlled.</b> OptiTrade stores public wallet addresses, network identifiers and wallet labels only. Never enter a recovery phrase, seed phrase or private key into OptiTrade.</div>
+
+  <div class="wallet-family-grid">
+    <article class="wallet-family-card evm">
+      <div class="wallet-family-icon">Ξ</div><div><h3>EVM Wallets</h3><p>Ethereum, Base, Arbitrum, Polygon, Optimism and BNB Chain.</p></div>
+      <div class="wallet-family-actions"><button id="walletConnect" class="btn primary" type="button">WalletConnect QR</button><button id="browserWalletConnect" class="btn" type="button">Browser EVM Wallet</button></div>
+      <small>MetaMask, Trust Wallet, Coinbase Wallet and compatible EVM wallets.</small>
+    </article>
+    <article class="wallet-family-card bitcoin">
+      <div class="wallet-family-icon">₿</div><div><h3>Bitcoin</h3><p>Connect an injected Bitcoin wallet and read the public payment address/balance.</p></div>
+      <div class="wallet-family-actions"><button id="bitcoinWalletConnect" class="btn primary" type="button">Connect Bitcoin Wallet</button></div>
+      <small>UniSat and OKX Bitcoin are supported directly; Xverse is attempted when its provider is exposed.</small>
+    </article>
+    <article class="wallet-family-card solana">
+      <div class="wallet-family-icon">◎</div><div><h3>Solana</h3><p>Connect Phantom, Solflare or another injected Solana provider.</p></div>
+      <div class="wallet-family-actions"><button id="solanaWalletConnect" class="btn primary" type="button">Connect Solana Wallet</button></div>
+      <small>On mobile, open OptiTrade in the wallet's in-app browser when direct injection is required.</small>
+    </article>
+    <article class="wallet-family-card tron">
+      <div class="wallet-family-icon">T</div><div><h3>TRON</h3><p>Connect TronLink and read the authorized public TRON account.</p></div>
+      <div class="wallet-family-actions"><button id="tronWalletConnect" class="btn primary" type="button">Connect TronLink</button></div>
+      <small>Uses the current TronLink provider when available, with legacy fallback.</small>
+    </article>
+  </div>
+
+  <div id="walletMessage" class="integration-message muted"></div>
+</section>
+
+<section class="card saved-wallets-card">
+  <div class="wallet-data-head"><div><h2>Connected Wallets</h2><small id="savedWalletCount">No saved wallet connections</small></div><button id="refreshSavedWallets" class="btn" type="button">Refresh</button></div>
+  <div id="savedWallets" class="saved-wallet-list"><div class="wallet-empty-mini">Connect a wallet above. Public connection details will appear here.</div></div>
+</section>
+
+<section class="card wallet-detail-card" id="walletSnapshot" hidden>
+  <div class="wallet-data-head"><div><p class="eyebrow">ACTIVE WALLET</p><h2 id="walletDetailTitle">Wallet Details</h2></div><button id="walletDisconnect" class="btn danger" type="button">Remove from OptiTrade</button></div>
+  <div class="wallet-address"><span>Connected address</span><code id="walletAddress">—</code></div>
+  <div class="integration-stats wallet-stats">
+    <article><span>Network</span><b id="walletNetwork">—</b><small id="walletChain">—</small></article>
+    <article><span>Native Balance</span><b id="walletBalance">—</b><small id="walletBalanceNote">Read-only balance</small></article>
+  </div>
+  <div class="wallet-meta"><span>Wallet</span><b id="walletProviderName">—</b></div>
+  <div class="wallet-data-section" id="evmTokensSection"><div class="wallet-data-head"><div><h3>Tracked Tokens</h3><small>Available for supported EVM networks.</small></div></div><div id="walletTokenList" class="wallet-token-list"></div></div>
+  <div class="wallet-data-section" id="evmHistorySection"><div class="wallet-data-head"><div><h3>Recent On-chain Activity</h3><small id="walletHistoryStatus">EVM history is optional and requires the configured provider.</small></div><button id="walletHistoryRefresh" class="btn" type="button">Refresh</button></div><div id="walletHistoryList" class="wallet-history-list"></div></div>
+</section>
+</main>
+
+<div id="walletQrModal" class="wc-custom-modal" hidden>
+  <div class="wc-custom-card" role="dialog" aria-modal="true" aria-labelledby="wcQrTitle">
+    <button id="walletQrClose" class="wc-custom-close" type="button" aria-label="Close">×</button>
+    <div class="wc-custom-mark">◇</div>
+    <h2 id="wcQrTitle">Connect EVM wallet</h2>
+    <p>Open a WalletConnect-compatible wallet on your phone and scan this temporary QR code.</p>
+    <div class="wc-custom-qr-wrap"><img id="walletQrImage" alt="WalletConnect pairing QR code"><div id="walletQrLoading">Creating secure pairing code…</div></div>
+    <div class="wc-custom-actions"><button id="walletQrCopy" class="btn" type="button">Copy pairing link</button><button id="walletQrCancel" class="btn danger" type="button">Cancel</button></div>
+    <small>Approval happens inside the wallet app.</small>
+  </div>
+</div>
+
+<nav class="bottom"><a href="/dashboard.html"><span>▦</span> Home</a><a href="/deposit.html"><span>⊕</span> Deposit</a><a href="/trade.html"><span>↗</span> Trade</a><a href="/profile.html"><span>♙</span> Profile</a><a href="/support.html"><span>◉</span> Support</a></nav>
+<script src="/js/pages.js"></script><script src="https://cdn.jsdelivr.net/npm/@walletconnect/ethereum-provider@2.23.9/dist/index.umd.js"></script><script src="/js/wallet-connect.bundle.js?v=multichain1"></script><script src="/js/account-support.js"></script><script src="/js/notifications.js"></script><script src="/js/i18n.js"></script></body></html>

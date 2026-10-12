@@ -1,0 +1,36 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Withdraw Funds | OptiTrade</title><link rel="stylesheet" href="/css/pages.css"></head><body>
+<header class="top"><a class="logo" href="/dashboard.html">↗ Opti<i> <span data-i18n="trade">Trade</span></i></a><div class="top-right"><span class="status-pill">WITHDRAWAL CENTER</span><a class="pill" href="/markets.html">● Markets</a><a class="pill" href="/profile.html" data-user-name>Account</a><button class="icon" data-logout title="Logout">↪</button></div></header>
+<main class="shell"><a class="back" href="/dashboard.html">← Back to dashboard</a><section class="hero"><div><div class="eyebrow">WALLET & FUNDS</div><h1>Withdraw Funds</h1><p>Submit a withdrawal request for administrator review.</p></div></section>
+<div class="grid">
+<section class="card span7"><h2>Withdrawal Request</h2><p 
+<div id="withdrawStatus" class="notice" style="margin-top:18px"><b>Withdrawal status</b><div id="withdrawStatusText" class="muted" style="margin-top:7px">Checking…</div></div>
+<div class="stack" id="withdrawForm" style="margin-top:18px">
+<div class="field"><label>Asset</label><select id="asset"><option>USD</option><option>USDT</option><option>BTC</option><option>ETH</option></select></div>
+<div class="field"><label>Amount</label><input id="amount" type="number" min="0" step="any" placeholder="0.00"></div>
+<div class="field"><label>External Receiver Address</label><input id="dest" name="external_wallet_destination" type="text" value="" maxlength="300" autocomplete="off" autocapitalize="none" autocorrect="off" spellcheck="false" data-form-type="other" placeholder="Enter the destination address yourself"><small class="muted">This field is intentionally blank. Your account email or username is never used as the receiver address.</small></div><div class="field"><label>Transaction PIN</label><input id="withdrawPin" type="password" inputmode="numeric" maxlength="4" autocomplete="off" placeholder="4-digit PIN"><small class="muted">Required to authorize this withdrawal request.</small></div><div id="pinSetupNotice" class="notice" hidden><b>Transaction PIN required</b><p class="muted">Set your PIN in Security before making withdrawals.</p><a class="btn" href="/security.html">Open Security</a></div>
+<button class="btn primary" id="submitWithdrawal">Submit Withdrawal </button></div></section>
+<section class="card span5"><h3>Available to request</h3><div class="value" id="available">$0.00</div><p class="muted" id="reservedText">Pending requests are reserved from your available account balance.</p></section></div>
+<section class="card" style="margin-top:18px"><div class="section-head"><div><h2>Withdrawal History</h2><p class="muted">Your requests will show Pending, On Hold, Approved or Declined.</p></div><button class="btn" id="refreshHistory">Refresh</button></div><div id="history" class="withdraw-history"><p class="muted">Loading…</p></div></section>
+</main>
+<nav class="bottom"><a href="/dashboard.html"><span>▦</span> Home</a><a href="/deposit.html"><span>⊕</span> Deposit</a><a href="/trade.html"><span>↗</span> Trade</a><a href="/profile.html"><span>♙</span> Profile</a><a href="/support.html"><span>◉</span> Support</a></nav><div id="toast" class="toast"></div>
+<script src="/js/pages.js"></script><script>
+(async()=>{
+if(!await auth())return;
+const destinationInput=$('#dest');if(destinationInput)destinationInput.value='';
+let status=null;
+const fmt=(a,n)=>a==='USD'?money(n):Number(n).toLocaleString(undefined,{maximumFractionDigits:8})+' '+a;
+async function loadStatus(){
+ const r=await fetch('/api/withdrawal/status'),d=await r.json();status=d;
+ const box=$('#withdrawStatus'),txt=$('#withdrawStatusText'),btn=$('#submitWithdrawal');
+ if(d.open){box.className='notice green';txt.innerHTML='✓ Withdrawals are open. Requests are submitted for admin review.';btn.disabled=false;btn.textContent='Submit Withdrawal Request'}
+ else{box.className='notice red';txt.textContent='⏸ '+(d.reason||'Withdrawals are temporarily paused.');btn.disabled=true;btn.textContent='Withdrawals paused'}
+ updateAvailable();
+}
+function updateAvailable(){if(!status)return;const a=$('#asset').value,row=status.assets.find(x=>x.asset===a)||{available:0,reserved:0};$('#available').textContent=fmt(a,row.available);$('#reservedText').textContent=row.reserved>0?`Reserved in pending/on-hold requests: ${fmt(a,row.reserved)}`:'No amount currently reserved in pending requests.'}
+async function loadHistory(){const r=await fetch('/api/withdrawal/requests'),d=await r.json();const esc=s=>String(s??'').replace(/[&<>"]/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[m]));$('#history').innerHTML=d.requests.length?d.requests.map(x=>`<div class="withdraw-row"><div><b>${esc(x.reference)}</b><small>${new Date(x.created_at+'Z').toLocaleString()}</small></div><div><b>${Number(x.amount).toLocaleString(undefined,{maximumFractionDigits:8})} ${esc(x.asset)}</b><small>${esc(x.destination)}</small></div><div><span class="wd-status ${esc(x.status)}">${esc(x.status.replace('_',' '))}</span>${x.review_reason?`<small class="wd-reason">${esc(x.review_reason)}</small>`:''}</div></div>`).join(''):'<p class="muted">No withdrawal requests yet.</p>'}
+$('#asset').onchange=()=>{updateAvailable();if($('#dest'))$('#dest').value=''};
+$('#refreshHistory').onclick=async()=>{await loadStatus();await loadHistory()};
+$('#submitWithdrawal').onclick=async()=>{if(!status?.open)return toast(status?.reason||'Withdrawals are paused.');const asset=$('#asset').value,amount=Number($('#amount').value),destination=$('#dest').value.trim(),pin=$('#withdrawPin').value.trim();if(!(amount>0))return toast('Enter a valid amount.');if(destination.length<3)return toast('Enter the receiver address.');if(!/^\d{4}$/.test(pin))return toast('Enter your 4-digit transaction PIN.');try{const r=await fetch('/api/withdrawal/requests',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({asset,amount,destination,pin})}),d=await r.json();if(!r.ok){if(d.needsPinSetup)$('#pinSetupNotice').hidden=false;return toast(d.error||'Could not submit withdrawal.')}toast('Withdrawal submitted • Pending • '+d.reference);$('#amount').value='';$('#dest').value='';$('#withdrawPin').value='';await loadStatus();await loadHistory()}catch(e){toast('Could not submit withdrawal request.')}}
+try{const s=await fetch('/api/security/status').then(r=>r.json());$('#pinSetupNotice').hidden=!!s.hasPin}catch{}await loadStatus();await loadHistory();
+})();
+</script><script src="/js/account-support.js"></script><script src="/js/notifications.js"></script><script src="/js/i18n.js"></script></body></html>

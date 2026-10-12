@@ -1,0 +1,165 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Internal Transfer | OptiProTrade</title><link rel="stylesheet" href="/css/pages.css"></head><body>
+<header class="top"><a class="logo" href="/dashboard.html">↗ Opti<i>Trade</i></a><div class="top-right"><a class="pill" href="/markets.html">● Markets</a><a class="pill" href="/profile.html" data-user-name>Account</a><button class="icon" data-logout title="Logout">↪</button></div></header>
+
+<main class="shell"><a class="back" href="/dashboard.html">← Back to dashboard</a>
+<section class="hero"><div><div class="eyebrow">WALLET & FUNDS</div><h1>Internal Transfer</h1><p>Send BTC, ETH or USDT directly to another OptiProTrade customer.</p></div></section>
+
+<section class="internal-transfer-summary">
+  <div><span>Transfer speed</span><b>Instant account update</b></div>
+  <div><span>Current fee</span><b>0</b></div>
+  <div><span>Recipient</span><b>Username or verified email</b></div>
+  <div><span>Security</span><b>Transaction PIN</b></div>
+</section>
+
+<section class="card transfer-balance-card">
+  <div class="section-head"><div><div class="eyebrow">AVAILABLE TO SEND</div><h2>Your Transfer Balances</h2><p class="muted">Pending withdrawal amounts are automatically excluded from what can be transferred.</p></div><span class="pill-soft">BTC • ETH • USDT</span></div>
+  <div id="transferBalanceGrid" class="transfer-balance-grid"><div class="muted">Loading balances…</div></div>
+</section>
+
+<div class="grid transfer-workspace">
+<section class="card span7">
+  <div class="section-head"><div><div class="eyebrow">NEW TRANSFER</div><h2>Send to an OptiProTrade Customer</h2></div><span class="transfer-step-badge">1 → 2 → PIN</span></div>
+
+  <div class="field"><label>Recipient username or email</label><div class="recipient-search-row"><input id="recipient" autocomplete="off" placeholder="Username or verified email"><button class="btn ghost" id="verifyRecipient" type="button">Verify</button></div><small class="muted">Enter the exact username or verified email address.</small></div>
+
+  <div id="recipientResult" class="recipient-result" hidden>
+    <div class="recipient-avatar" id="recipientAvatar">OT</div>
+    <div><span>Recipient verified</span><b id="recipientName">—</b><small id="recipientMeta">—</small></div>
+    <strong>✓</strong>
+  </div>
+
+  <div class="transfer-form-grid">
+    <div class="field"><label>Asset</label><select id="asset"><option>BTC</option><option>ETH</option><option>USDT</option></select><small class="muted" id="availableText">Available: —</small></div>
+    <div class="field"><label>Amount</label><div class="amount-row"><input id="amount" type="number" min="0" step="any" inputmode="decimal" placeholder="0.00"><button class="btn ghost" id="maxAmount" type="button">MAX</button></div></div>
+  </div>
+
+  <div class="field"><label>Note <span class="muted">(optional)</span></label><input id="note" maxlength="300" placeholder="What is this transfer for?"></div>
+
+  <div class="transfer-preview-box">
+    <div><span>You send</span><b id="previewAmount">—</b></div>
+    <div><span>Fee</span><b>0</b></div>
+    <div><span>Recipient receives</span><b id="previewReceive">—</b></div>
+  </div>
+
+  <button class="btn primary transfer-review-btn" id="reviewTransfer" type="button">Review Transfer</button>
+</section>
+
+<section class="card span5 transfer-side-card">
+  <div class="transfer-shield">⇄</div>
+  <h2>Internal means account-to-account</h2>
+  <p class="muted">This sends value to another OptiProTrade customer balance. It does not send crypto to an outside blockchain wallet address.</p>
+  <div class="transfer-side-points">
+    <div><span>✓</span><p><b>Verify the recipient</b><small>Confirm the displayed customer before continuing.</small></p></div>
+    <div><span>✓</span><p><b>PIN protected</b><small>Your transaction PIN is required at final confirmation.</small></p></div>
+    <div><span>✓</span><p><b>Recorded in history</b><small>Both sender and recipient receive a transaction record.</small></p></div>
+  </div>
+  <a class="btn ghost" href="/withdraw.html">Sending to an outside wallet? Withdraw instead →</a>
+</section>
+</div>
+
+<section class="card transfer-history-card"><div class="section-head"><div><h2>Recent Internal Transfers</h2><p class="muted">Sent and received transfers on your account.</p></div><button class="btn ghost" id="refreshHistory" type="button">Refresh</button></div><div id="transferHistory" class="transfer-history-list"><div class="muted">Loading transfers…</div></div></section>
+</main>
+
+<div class="switch-modal-backdrop" id="transferPinModal" hidden>
+  <div class="switch-pin-modal" role="dialog" aria-modal="true" aria-labelledby="transferModalTitle">
+    <button class="switch-modal-close" id="closeTransferModal" type="button">×</button>
+    <div class="switch-modal-icon">⇄</div>
+    <div class="eyebrow">FINAL CONFIRMATION</div>
+    <h2 id="transferModalTitle">Confirm Internal Transfer</h2>
+    <p class="muted">Check the recipient and amount carefully before entering your transaction PIN.</p>
+
+    <div class="transfer-confirm-recipient">
+      <div class="recipient-avatar" id="modalRecipientAvatar">OT</div>
+      <div><span>Sending to</span><b id="modalRecipientName">—</b><small id="modalRecipientMeta">—</small></div>
+    </div>
+
+    <div class="plan-confirm-summary">
+      <div><span>Asset</span><b id="modalAsset">—</b></div>
+      <div><span>Amount</span><b id="modalAmount">—</b></div>
+      <div><span>Fee</span><b>0</b></div>
+      <div><span>Recipient receives</span><b id="modalReceive">—</b></div>
+    </div>
+
+    <div class="field switch-pin-field"><label>Transaction PIN</label><input id="transferPin" type="password" inputmode="numeric" maxlength="4" autocomplete="off" placeholder="••••"><small class="muted">Never share your transaction PIN with anyone.</small></div>
+    <div class="switch-modal-actions"><button class="btn ghost" id="cancelTransferModal" type="button">Cancel</button><button class="btn primary" id="confirmTransfer" type="button">Confirm Transfer</button></div>
+  </div>
+</div>
+
+<nav class="bottom"><a href="/dashboard.html"><span>▦</span> Home</a><a href="/deposit.html"><span>⊕</span> Deposit</a><a href="/trade.html"><span>↗</span> Trade</a><a href="/profile.html"><span>♙</span> Profile</a><a href="/support.html"><span>◉</span> Support</a></nav><div id="toast" class="toast"></div>
+
+<script src="/js/pages.js"></script><script>
+let transferState={assets:{},recipient:null};
+const fmt=(v,a)=>a==='USDT'?Number(v||0).toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:6}):Number(v||0).toLocaleString(undefined,{maximumFractionDigits:10});
+const initials=s=>String(s||'OT').trim().split(/\s+/).slice(0,2).map(x=>x[0]||'').join('').toUpperCase()||'OT';
+function available(a){return Number(transferState.assets?.[a]?.available||0)}
+function syncTransferPreview(){
+ const a=asset.value,n=Number(amount.value);
+ availableText.textContent=`Available: ${fmt(available(a),a)} ${a}`;
+ previewAmount.textContent=n>0?`${fmt(n,a)} ${a}`:'—';
+ previewReceive.textContent=n>0?`${fmt(n,a)} ${a}`:'—';
+}
+async function loadStatus(){
+ try{
+   const r=await fetch('/api/internal-transfer/status',{cache:'no-store'}),d=await r.json();
+   if(!r.ok)throw new Error(d.error||'Could not load balances.');
+   transferState.assets=Object.fromEntries((d.assets||[]).map(x=>[x.asset,x]));
+   transferBalanceGrid.innerHTML=(d.assets||[]).map(x=>`<article class="transfer-balance-item"><div><span>${x.asset}</span><small>Available to send</small></div><b>${fmt(x.available,x.asset)} <small>${x.asset}</small></b>${Number(x.reserved)>0?`<em>${fmt(x.reserved,x.asset)} reserved</em>`:'<em>No reserved amount</em>'}<button type="button" data-transfer-asset="${x.asset}" ${Number(x.available)<=0?'disabled':''}>Send ${x.asset}</button></article>`).join('');
+   document.querySelectorAll('[data-transfer-asset]').forEach(b=>b.onclick=()=>{asset.value=b.dataset.transferAsset;amount.value='';syncTransferPreview();document.querySelector('.transfer-workspace').scrollIntoView({behavior:'smooth',block:'start'});setTimeout(()=>recipient.focus(),400)});
+   syncTransferPreview();
+ }catch(e){transferBalanceGrid.innerHTML=`<div class="muted">${e.message}</div>`}
+}
+function resetRecipient(){
+ transferState.recipient=null;recipientResult.hidden=true;verifyRecipient.textContent='Verify';
+}
+async function verifyRecipientNow(){
+ const id=recipient.value.trim();if(!id)return toast('Enter the recipient username or email.');
+ verifyRecipient.disabled=true;verifyRecipient.textContent='Checking…';
+ try{
+   const r=await fetch('/api/internal-transfer/recipient?identifier='+encodeURIComponent(id),{cache:'no-store'}),d=await r.json();
+   if(!r.ok)throw new Error(d.error||'Recipient could not be verified.');
+   transferState.recipient=d.recipient;
+   recipientAvatar.textContent=initials(d.recipient.name);
+   recipientName.textContent=d.recipient.name;
+   recipientMeta.textContent=`${d.recipient.username?'@'+d.recipient.username+' • ':''}${d.recipient.emailMasked}`;
+   recipientResult.hidden=false;verifyRecipient.textContent='Verified ✓';
+   return true;
+ }catch(e){resetRecipient();toast(e.message);return false}
+ finally{verifyRecipient.disabled=false;if(!transferState.recipient)verifyRecipient.textContent='Verify'}
+}
+async function loadHistory(){
+ try{
+   const r=await fetch('/api/internal-transfer/history',{cache:'no-store'}),d=await r.json();
+   transferHistory.innerHTML=r.ok&&d.transfers?.length?d.transfers.slice(0,12).map(x=>`<article class="transfer-history-row"><div class="transfer-history-icon ${x.direction}">${x.direction==='received'?'↓':'↑'}</div><div><b>${x.direction==='received'?'Received from':'Sent to'} ${x.counterparty.username?'@'+x.counterparty.username:x.counterparty.name}</b><span>${x.reference} • ${new Date(String(x.createdAt||'').replace(' ','T')+'Z').toLocaleString()}</span>${x.note?`<small>${String(x.note).replace(/[&<>"]/g,'')}</small>`:''}</div><div><b>${x.direction==='received'?'+':'-'}${fmt(x.amount,x.asset)} ${x.asset}</b><span>Completed</span></div></article>`).join(''):'<div class="transfer-history-empty">No internal transfers yet.</div>';
+ }catch{transferHistory.innerHTML='<div class="transfer-history-empty">Could not load transfer history.</div>'}
+}
+function openTransferModal(){
+ const r=transferState.recipient,a=asset.value,n=Number(amount.value);
+ modalRecipientAvatar.textContent=initials(r.name);modalRecipientName.textContent=r.name;modalRecipientMeta.textContent=`${r.username?'@'+r.username+' • ':''}${r.emailMasked}`;
+ modalAsset.textContent=a;modalAmount.textContent=`${fmt(n,a)} ${a}`;modalReceive.textContent=`${fmt(n,a)} ${a}`;
+ transferPin.value='';transferPinModal.hidden=false;requestAnimationFrame(()=>transferPinModal.classList.add('open'));setTimeout(()=>transferPin.focus(),180);
+}
+function closeTransferModal(){transferPinModal.classList.remove('open');setTimeout(()=>transferPinModal.hidden=true,170)}
+recipient.oninput=resetRecipient;verifyRecipient.onclick=verifyRecipientNow;asset.onchange=syncTransferPreview;amount.oninput=syncTransferPreview;
+maxAmount.onclick=()=>{amount.value=available(asset.value);syncTransferPreview()};
+transferPin.oninput=()=>transferPin.value=transferPin.value.replace(/\D/g,'').slice(0,4);
+reviewTransfer.onclick=async()=>{
+ const n=Number(amount.value),a=asset.value;if(!(n>0))return toast('Enter an amount to transfer.');if(n>available(a)+1e-12)return toast(`Maximum available is ${fmt(available(a),a)} ${a}.`);
+ if(!transferState.recipient){const ok=await verifyRecipientNow();if(!ok)return}
+ openTransferModal();
+};
+confirmTransfer.onclick=async()=>{
+ if(!/^\d{4}$/.test(transferPin.value))return toast('Enter your 4-digit transaction PIN.');
+ confirmTransfer.disabled=true;confirmTransfer.textContent='Transferring…';
+ try{
+   const r=await fetch('/api/internal-transfer',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({recipient:recipient.value.trim(),asset:asset.value,amount:Number(amount.value),note:note.value.trim(),pin:transferPin.value})}),d=await r.json();
+   if(!r.ok){if(d.needsPinSetup){toast('Set your transaction PIN in Security first.');setTimeout(()=>location='/security.html',900)}else toast(d.error||'Could not complete transfer.');return}
+   closeTransferModal();toast(`${fmt(d.amount,d.asset)} ${d.asset} sent successfully.`);
+   recipient.value='';amount.value='';note.value='';resetRecipient();await Promise.all([loadStatus(),loadHistory()]);
+ }catch{toast('Could not complete the internal transfer.')}
+ finally{confirmTransfer.disabled=false;confirmTransfer.textContent='Confirm Transfer'}
+};
+closeTransferModal.onclick=cancelTransferModal.onclick=closeTransferModal;transferPinModal.onclick=e=>{if(e.target===transferPinModal)closeTransferModal()};
+refreshHistory.onclick=loadHistory;
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!transferPinModal.hidden)closeTransferModal();if(e.key==='Enter'&&!transferPinModal.hidden&&document.activeElement===transferPin)confirmTransfer.click()});
+(async()=>{if(!await auth())return;await Promise.all([loadStatus(),loadHistory()])})();
+</script><script src="/js/account-support.js"></script><script src="/js/notifications.js"></script><script src="/js/i18n.js"></script></body></html>

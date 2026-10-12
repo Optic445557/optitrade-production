@@ -1,0 +1,85 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Dashboard | OptiTrade</title><link rel="stylesheet" href="/css/dashboard.css"></head><body>
+<div class="app">
+<header class="topbar"><a class="logo" href="#"><span>↗</span> Opti<span> <span data-i18n="trade">Trade</span></span></a><div class="top-actions"><button class="icon-btn" id="themeBtn" aria-label="Theme">☾</button><button class="avatar" id="avatar">U</button><button class="icon-btn" id="menuBtn" aria-label="Menu">☰</button></div></header>
+<div class="ticker"><span class="live"><i></i> LIVE MARKET</span><div class="dash-ticker-window"><div class="dash-ticker-marquee" id="dashTickerMarquee"><div class="dash-ticker-group" id="dashTickerGroup"><span>BTC <b id="tickBtc">Loading…</b></span><span>ETH <b id="tickEth">Loading…</b></span><span>EUR/USD <b id="tickEur">—</b></span><span>GBP/USD <b id="tickGbp">—</b></span><span>USD/JPY <b id="tickJpy">—</b></span></div><div class="dash-ticker-group" aria-hidden="true"><span>BTC <b data-dash-clone="tickBtc">Loading…</b></span><span>ETH <b data-dash-clone="tickEth">Loading…</b></span><span>EUR/USD <b data-dash-clone="tickEur">—</b></span><span>GBP/USD <b data-dash-clone="tickGbp">—</b></span><span>USD/JPY <b data-dash-clone="tickJpy">—</b></span></div></div></div><span class="ticker-balance">ACCOUNT VALUE <b id="tickBalance">$0.00</b></span></div>
+<aside class="drawer" id="drawer"><div class="drawer-user"><div class="big-avatar" id="drawerAvatar">U</div><div><strong id="drawerName">User</strong><small>Account value: <b id="drawerBalance">$0.00</b></small></div><button id="closeMenu">×</button></div><div class="drawer-live"><span>LIVE MARKET</span><b>● LIVE</b></div><nav>
+<p>OVERVIEW</p><a class="active" href="/dashboard.html">▦ Dashboard</a><a href="/statement.html">▤ Account Statement</a>
+<p>PORTFOLIO & INVESTMENTS</p><button class="nav-parent">◎ Investment Plans <span>⌄</span></button><div class="sub"><a href="/investments.html">All Plans</a><a href="/markets.html">↗ Stock Market</a><a href="/markets.html">◉ Cryptocurrency</a></div><a href="/portfolio.html">◔ My Portfolio</a><a href="/portfolio.html#performance">〽 Performance History</a>
+<p>TRADING & MARKETS</p><a href="/trade.html">♙ Trading</a><a href="/markets.html">▥ Live Markets</a>
+<p>WALLET & FUNDS</p><a href="/deposit.html">⊕ Deposit Funds</a><a href="/withdraw.html">⊖ Withdraw Funds</a><a href="/transfer.html">⇄ Internal Transfer</a>
+<p>ACCOUNT</p><a href="/profile.html">♙ Profile Settings</a><a href="/kyc.html">◎ Identity Verification</a><a href="/security.html">⌾ Security</a><a href="/integrations.html">◇ Wallet Connections</a><a href="/support.html">◉ Support Center</a><button class="signout" id="logout">↪ Sign Out</button></nav></aside><div class="shade" id="shade"></div>
+<main class="content"><section class="welcome"><p class="eyebrow">ACCOUNT OVERVIEW</p><h1 id="hello">Welcome!</h1><p>Your OptiTrade portfolio and market overview.</p></section>
+<div class="dashboard-banner-slot" data-dashboard-banner aria-live="polite">
+<section class="ot-banner-carousel ot-banner-fallback" data-banner-fallback>
+  <div class="ot-banner-track">
+    <article class="ot-banner-slide">
+      <div class="ot-banner-copy">
+        <span class="ot-banner-kind">OPTITRADE UPDATE</span>
+        <h2>Trade, learn and manage your portfolio</h2>
+        <p>Explore reference market data, trading tools and your latest account activity from one dashboard.</p>
+        <a class="ot-banner-cta" href="/markets.html">Explore Markets →</a>
+      </div>
+    </article>
+  </div>
+</section>
+</div>
+<section class="balance-card" id="portfolio"><div class="balance-title"><span>▣</span><div><h3>Account Value</h3><p>Current value of your OptiTrade balances and active allocations</p></div></div><strong class="main-balance market-main-balance" id="portfolioValue">$0.00</strong><div class="portfolio-market-meta"><span><b id="portfolioBtcHolding">0.00000000 BTC</b> BTC holding</span><span><b id="portfolioBtcPrice">$0.00</b> BTC/USD reference</span></div><span class="available">◔ Current account value</span><small id="updated">Updating portfolio…</small><small class="practice-ledger-note">Account Value counts each internal balance once across Wallet, Trading, Investment and Portfolio sections. Crypto is converted with current reference prices. Moving funds between sections does not create extra value. Available Balance below shows liquid wallet value after withdrawal reservations.</small><div class="actions dashboard-quick-actions"><button data-action="deposit"><span class="qa-icon">⊕</span><span class="qa-copy"><b>Deposit</b><small>Add funds</small></span></button><button data-action="withdraw"><span class="qa-icon">↗</span><span class="qa-copy"><b>Withdraw</b><small>Send funds</small></span></button><button class="connection-action" data-action="connections"><span class="qa-icon">⇆</span><span class="qa-copy"><b>Connect Wallet</b><small>Secure wallet link</small></span></button><button data-action="switch"><span class="qa-icon">⇄</span><span class="qa-copy"><b>Switch</b><small>Rebalance portfolio</small></span></button><button data-action="plans"><span class="qa-icon">◎</span><span class="qa-copy"><b>Plans</b><small>Investment strategies</small></span></button><button class="primary" data-action="trade"><span class="qa-icon">↗</span><span class="qa-copy"><b>Trade</b><small>Open trading</small></span></button></div></section>
+<section class="stats"><article><span>Total Deposited</span><b id="totalDepositedStat">$0.00</b><small>Approved deposit credits only</small></article><article><span>Available Balance</span><b id="usdStat">$0.00</b><small id="availableBreakdown">Liquid wallet value after pending withdrawal reservations</small></article><article><span>Liquid Crypto Value</span><b id="cryptoStat">$0.00</b><small>Wallet crypto available now • included in Available Balance</small></article><article><span>Account Type</span><b>Standard</b><small>OptiTrade account</small></article></section>
+<section class="section dashboard-investment-summary" id="investmentSummary">
+  <div class="section-head"><div><p class="eyebrow">INVESTMENT PLANS</p><h2>Active Investments</h2><p class="investment-summary-note">Approved investment plans and their nearest maturity.</p></div><a class="see-more-link" href="/investments.html">View investments →</a></div>
+  <div class="investment-summary-grid">
+    <article><span>Active plans</span><b id="activeInvestmentCount">0</b></article>
+    <article><span>Starting allocation</span><b id="activeInvestmentAllocated">$0.00</b></article>
+    <article><span>Latest tracked value</span><b id="activeInvestmentValue">$0.00</b></article>
+    <article><span>Nearest maturity</span><b id="activeInvestmentMaturity">—</b><small id="activeInvestmentPlan">No active plan</small></article>
+  </div>
+</section>
+
+<section class="section live-chart-board" id="liveChartBoard">
+  <div class="section-head chart-board-head">
+    <div>
+      <p class="eyebrow">LIVE MARKET CHART</p>
+      <h2>Multi-Market Chart Board</h2>
+      <p class="chart-subtitle">Reference market data for your OptiTrade dashboard.</p>
+    </div>
+    <span class="chart-live"><i></i> LIVE DATA</span>
+  </div>
+  <div class="market-type-tabs" role="tablist" aria-label="Market type">
+    <button class="active" data-market-type="crypto" type="button">Crypto</button>
+    <button data-market-type="forex" type="button">Forex</button>
+  </div>
+  <div class="chart-toolbar">
+    <div class="chart-symbols" id="chartSymbols" role="tablist" aria-label="Chart symbol"></div>
+    <div class="chart-ranges" role="tablist" aria-label="Chart range">
+      <button data-chart-range="1" type="button">24H</button>
+      <button class="active" data-chart-range="7" type="button">7D</button>
+      <button data-chart-range="30" type="button">30D</button>
+    </div>
+  </div>
+  <div class="chart-summary">
+    <div>
+      <small id="chartPair">BTC/USDT</small>
+      <strong id="chartPrice">Loading…</strong>
+    </div>
+    <div class="chart-change" id="chartChange">—</div>
+    <div class="chart-stats">
+      <span>High <b id="chartHigh">—</b></span>
+      <span>Low <b id="chartLow">—</b></span>
+      <span>Range <b id="chartRangeLabel">7D</b></span>
+    </div>
+  </div>
+  <div class="chart-canvas-wrap">
+    <canvas id="marketChart" aria-label="Historical crypto price chart"></canvas>
+    <div class="chart-loading" id="chartLoading">Loading market history…</div>
+    <div class="chart-tooltip" id="chartTooltip" hidden></div>
+  </div>
+  <div class="chart-axis-labels"><span id="chartStart">—</span><span id="chartEnd">—</span></div>
+  <div class="market-note">Reference data only. Prices can differ from executable market quotes and may be delayed by the upstream data provider.</div>
+</section>
+
+<section class="section" id="markets"><div class="section-head"><div><p class="eyebrow">MARKET DATA</p><h2>Market Overview</h2></div><span class="source">● AUTO UPDATE</span></div><div class="market-grid" id="marketGrid"></div><div class="market-note">Crypto prices refresh periodically. FX reference rates may update less frequently than trading-market quotes.</div></section>
+<section class="section"><div class="section-head"><div><p class="eyebrow">YOUR ACCOUNT</p><h2>Assets</h2></div></div><div class="assets" id="balances"></div></section>
+<section class="section dashboard-recent-preview" id="statement"><div class="section-head"><div><p class="eyebrow">RECENT ACTIVITY</p><h2>Latest Transactions</h2><p class="recent-preview-note">Your 3 most recent account transactions.</p></div><a class="see-more-link" href="/transactions.html">See more →</a></div><div id="recentTransactions" class="recent-transactions"><div class="empty compact-empty"><div>↔</div><b>Loading transactions…</b><p>Your latest account activity will appear here.</p></div></div></section>
+</main>
+<nav class="bottom-nav"><a class="active" href="/dashboard.html"><span>▦</span> <span data-i18n="home">Home</span></a><button data-action="deposit"><span>⊕</span> <span data-i18n="deposit">Deposit</span></button><button class="trade-fab" data-action="trade"><span>↗</span><small> <span data-i18n="trade">Trade</span></small></button><a href="/profile.html"><span>♙</span> <span data-i18n="profile">Profile</span></a><a href="/support.html"><span>◉</span> <span data-i18n="support">Support</span></a></nav>
+<div class="toast" id="toast"></div></div><script src="/js/dashboard.js"></script><script src="/js/account-support.js"></script><script src="/js/notifications.js"></script><script src="/js/i18n.js"></script><script src="/js/dashboard-banners.js"></script><script src="/js/live-market-chart.js"></script></body></html>

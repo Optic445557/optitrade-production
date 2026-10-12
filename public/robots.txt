@@ -1,0 +1,13 @@
+User-agent: *
+Allow: /
+Disallow: /api/
+Disallow: /admin/
+Disallow: /dashboard.html
+Disallow: /profile.html
+Disallow: /security.html
+Disallow: /transactions.html
+Disallow: /statement.html
+Disallow: /deposit.html
+Disallow: /withdraw.html
+Disallow: /transfer.html
+Sitemap: https://optiprotrade.online/sitemap.xml
