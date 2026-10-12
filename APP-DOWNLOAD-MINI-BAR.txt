@@ -1,0 +1,25 @@
+OptiTrade App Download Mini-Bar Patch
+
+Adds a small dismissible Android app download bar to:
+- homepage
+- dashboard
+- markets/trading/portfolio/investment pages
+- deposit/withdraw/transfer/transaction pages
+- profile/security/support/integrations/KYC pages
+
+Behavior:
+- fixed at the bottom, compact and responsive
+- Download App points to /downloads/OptiTrade.apk
+- if APK is missing or 0 bytes, sends user to /download-app.html instead of a broken download
+- X closes the banner
+- dismissal is remembered for 7 days in that browser
+- automatically hidden inside the installed OptiTrade Android app
+
+Files added:
+public/css/app-download-banner.css
+public/js/app-download-banner.js
+
+Files updated:
+the listed public HTML pages only.
+
+No .env, database, API keys, signing keys, node_modules, or private credentials are included.

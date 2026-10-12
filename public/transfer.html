@@ -1,4 +1,5 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Internal Transfer | OptiProTrade</title><link rel="stylesheet" href="/css/pages.css"></head><body>
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Internal Transfer | OptiProTrade</title><link rel="stylesheet" href="/css/pages.css">  <link rel="stylesheet" href="/css/app-download-banner.css">
+</head><body>
 <header class="top"><a class="logo" href="/dashboard.html">↗ Opti<i>Trade</i></a><div class="top-right"><a class="pill" href="/markets.html">● Markets</a><a class="pill" href="/profile.html" data-user-name>Account</a><button class="icon" data-logout title="Logout">↪</button></div></header>
 
 <main class="shell"><a class="back" href="/dashboard.html">← Back to dashboard</a>
@@ -162,4 +163,5 @@ closeTransferModal.onclick=cancelTransferModal.onclick=closeTransferModal;transf
 refreshHistory.onclick=loadHistory;
 document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!transferPinModal.hidden)closeTransferModal();if(e.key==='Enter'&&!transferPinModal.hidden&&document.activeElement===transferPin)confirmTransfer.click()});
 (async()=>{if(!await auth())return;await Promise.all([loadStatus(),loadHistory()])})();
-</script><script src="/js/account-support.js"></script><script src="/js/notifications.js"></script><script src="/js/i18n.js"></script></body></html>
+</script><script src="/js/account-support.js"></script><script src="/js/notifications.js"></script><script src="/js/i18n.js"></script>  <script src="/js/app-download-banner.js" defer></script>
+</body></html>

@@ -1,4 +1,5 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Transaction History | OptiProTrade</title><link rel="stylesheet" href="/css/pages.css"></head><body>
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Transaction History | OptiProTrade</title><link rel="stylesheet" href="/css/pages.css">  <link rel="stylesheet" href="/css/app-download-banner.css">
+</head><body>
 <header class="top"><a class="logo" href="/dashboard.html">↗ Opti<i>Trade</i></a><div class="top-right"><a class="pill" href="/markets.html">● Markets</a><a class="pill" href="/profile.html" data-user-name>Account</a><button class="icon" data-logout title="Logout">↪</button></div></header>
 <main class="shell"><a class="back" href="/dashboard.html">← Back to dashboard</a>
 <section class="hero"><div><div class="eyebrow">ACCOUNT ACTIVITY</div><h1>Transaction History</h1><p>Review deposits, withdrawals, trades, balance changes and portfolio switches recorded on your account.</p></div></section>
@@ -24,4 +25,5 @@
    historyList.innerHTML=r.ok&&d.transactions?.length?d.transactions.map(x=>`<div class="item"><span class="muted">${new Date(String(x.createdAt||'').replace(' ','T')+'Z').toLocaleString()}</span><span><b>${esc(label(x))}</b><small>${esc(x.reference||'')} • ${esc(String(x.status||'completed').replace('_',' '))}${x.note?` • ${esc(x.note)}`:''}</small></span><span>${esc(x.asset||'')}</span><span>${amount(x)}</span></div>`).join(''):'<div class="item"><span class="muted">No transactions yet.</span></div>';
  }catch{historyList.innerHTML='<div class="item"><span class="muted">Could not load transaction history. Refresh to try again.</span></div>'}
 })();
-</script><script src="/js/account-support.js"></script><script src="/js/notifications.js"></script><script src="/js/i18n.js"></script></body></html>
+</script><script src="/js/account-support.js"></script><script src="/js/notifications.js"></script><script src="/js/i18n.js"></script>  <script src="/js/app-download-banner.js" defer></script>
+</body></html>

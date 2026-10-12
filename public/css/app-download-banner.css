@@ -1,0 +1,38 @@
+
+/* OptiTrade Android download mini-bar */
+#ot-app-download-bar{
+  position:fixed;left:50%;bottom:14px;transform:translateX(-50%);
+  width:min(720px,calc(100% - 24px));z-index:9998;
+  display:flex;align-items:center;gap:10px;
+  padding:9px 10px 9px 11px;border:1px solid rgba(79,171,255,.42);
+  border-radius:14px;background:rgba(5,17,31,.94);
+  -webkit-backdrop-filter:blur(16px);backdrop-filter:blur(16px);
+  box-shadow:0 14px 34px rgba(0,0,0,.32),0 0 0 1px rgba(32,202,255,.04) inset;
+  color:#eff9ff;font-family:Inter,Segoe UI,Arial,sans-serif
+}
+#ot-app-download-bar[hidden]{display:none!important}
+.ot-app-icon{
+  width:34px;height:34px;flex:0 0 34px;border-radius:10px;
+  display:grid;place-items:center;background:linear-gradient(135deg,#19d2ff,#176dff);
+  color:#fff;font-size:18px;font-weight:950;box-shadow:0 7px 18px rgba(23,109,255,.28)
+}
+.ot-app-copy{min-width:0;flex:1;line-height:1.15}
+.ot-app-copy b{display:block;font-size:11px;letter-spacing:.1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ot-app-copy span{display:block;margin-top:3px;color:#89a8bf;font-size:9px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ot-app-download-btn{
+  flex:0 0 auto;text-decoration:none;border-radius:9px;padding:8px 11px;
+  background:linear-gradient(135deg,#14c9f6,#176cff);color:#fff!important;
+  font-size:10px;font-weight:900;box-shadow:0 8px 16px rgba(23,108,255,.2)
+}
+.ot-app-download-btn:hover{filter:brightness(1.08)}
+.ot-app-close{
+  flex:0 0 auto;width:28px;height:28px;border:0;border-radius:8px;
+  background:transparent;color:#7895aa;font-size:19px;line-height:1;cursor:pointer
+}
+.ot-app-close:hover{background:#112a40;color:#eaf8ff}
+@media(max-width:520px){
+  #ot-app-download-bar{bottom:9px;width:calc(100% - 16px);padding:8px;gap:8px;border-radius:12px}
+  .ot-app-icon{width:31px;height:31px;flex-basis:31px;font-size:16px}
+  .ot-app-copy b{font-size:10px}.ot-app-copy span{font-size:8px}
+  .ot-app-download-btn{padding:7px 9px;font-size:9px}.ot-app-close{width:25px;height:25px}
+}

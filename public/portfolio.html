@@ -1,4 +1,5 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>My Portfolio | OptiProTrade</title><link rel="stylesheet" href="/css/pages.css"></head><body>
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>My Portfolio | OptiProTrade</title><link rel="stylesheet" href="/css/pages.css">  <link rel="stylesheet" href="/css/app-download-banner.css">
+</head><body>
 <header class="top"><a class="logo" href="/dashboard.html">↗ Opti<i>Trade</i></a><div class="top-right"><a class="pill" href="/markets.html">● Markets</a><a class="pill" href="/profile.html" data-user-name>Account</a><button class="icon" data-logout title="Logout">↪</button></div></header>
 
 <main class="shell"><a class="back" href="/dashboard.html">← Back to dashboard</a>
@@ -249,4 +250,5 @@ switchPinModal.onclick=e=>{if(e.target===switchPinModal)closePinModal()};
 document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!switchPinModal.hidden)closePinModal();if(e.key==='Enter'&&!switchPinModal.hidden&&document.activeElement===switchPin)executeConfirmedSwitch()});
 
 refreshData();
-</script><script src="/js/account-support.js"></script><script src="/js/notifications.js"></script><script src="/js/i18n.js"></script></body></html>
+</script><script src="/js/account-support.js"></script><script src="/js/notifications.js"></script><script src="/js/i18n.js"></script>  <script src="/js/app-download-banner.js" defer></script>
+</body></html>
