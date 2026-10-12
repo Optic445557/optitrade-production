@@ -1,0 +1,78 @@
+name: Build OptiTrade Signed Release APK
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  release-apk:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v4
+        with:
+          accept-android-sdk-licenses: 'true'
+          packages: 'platform-tools platforms;android-35 build-tools;35.0.0'
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.10.2'
+
+      - name: Restore private signing keystore
+        shell: bash
+        env:
+          KEYSTORE_B64: ${{ secrets.OPTITRADE_ANDROID_KEYSTORE_B64 }}
+        run: |
+          test -n "$KEYSTORE_B64" || (echo "Missing OPTITRADE_ANDROID_KEYSTORE_B64 secret" && exit 1)
+          printf '%s' "$KEYSTORE_B64" | base64 --decode > "$RUNNER_TEMP/OptiTrade-release.jks"
+          chmod 600 "$RUNNER_TEMP/OptiTrade-release.jks"
+
+      - name: Check signing secrets
+        shell: bash
+        env:
+          STORE_PASSWORD: ${{ secrets.OPTITRADE_ANDROID_STORE_PASSWORD }}
+          KEY_PASSWORD: ${{ secrets.OPTITRADE_ANDROID_KEY_PASSWORD }}
+        run: |
+          test -n "$STORE_PASSWORD" || (echo "Missing OPTITRADE_ANDROID_STORE_PASSWORD secret" && exit 1)
+          test -n "$KEY_PASSWORD" || (echo "Missing OPTITRADE_ANDROID_KEY_PASSWORD secret" && exit 1)
+
+      - name: Build signed release APK
+        working-directory: android-app
+        env:
+          OPTITRADE_KEYSTORE_PATH: ${{ runner.temp }}/OptiTrade-release.jks
+          OPTITRADE_KEYSTORE_PASSWORD: ${{ secrets.OPTITRADE_ANDROID_STORE_PASSWORD }}
+          OPTITRADE_KEY_ALIAS: optitrade
+          OPTITRADE_KEY_PASSWORD: ${{ secrets.OPTITRADE_ANDROID_KEY_PASSWORD }}
+        run: gradle --no-daemon clean assembleRelease
+
+      - name: Verify APK signature
+        shell: bash
+        run: |
+          APKSIGNER="$ANDROID_HOME/build-tools/35.0.0/apksigner"
+          APK="android-app/app/build/outputs/apk/release/app-release.apk"
+          test -f "$APK" || (echo "Release APK was not created" && exit 1)
+          "$APKSIGNER" verify --verbose --print-certs "$APK"
+          cp "$APK" OptiTrade.apk
+          sha256sum OptiTrade.apk > OptiTrade.apk.sha256
+
+      - name: Upload signed APK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: OptiTrade-signed-release-apk
+          path: |
+            OptiTrade.apk
+            OptiTrade.apk.sha256
+          if-no-files-found: error
+          retention-days: 30
