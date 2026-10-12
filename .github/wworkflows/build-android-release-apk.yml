@@ -20,24 +20,33 @@ jobs:
           java-version: '17'
 
       - name: Set up Android SDK
-        uses: android-actions/setup-android@v3
-
-      - name: Install Android SDK components
-        run: sdkmanager "platforms;android-35" "build-tools;35.0.0"
+        uses: android-actions/setup-android@v4
+        with:
+          accept-android-sdk-licenses: 'true'
+          packages: 'platform-tools platforms;android-35 build-tools;35.0.0'
 
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: '8.10.2'
 
-      - name: Restore private signing keystore from GitHub secret
+      - name: Restore private signing keystore
         shell: bash
         env:
           KEYSTORE_B64: ${{ secrets.OPTITRADE_ANDROID_KEYSTORE_B64 }}
         run: |
           test -n "$KEYSTORE_B64" || (echo "Missing OPTITRADE_ANDROID_KEYSTORE_B64 secret" && exit 1)
-          echo "$KEYSTORE_B64" | base64 --decode > "$RUNNER_TEMP/OptiTrade-release.jks"
+          printf '%s' "$KEYSTORE_B64" | base64 --decode > "$RUNNER_TEMP/OptiTrade-release.jks"
           chmod 600 "$RUNNER_TEMP/OptiTrade-release.jks"
+
+      - name: Check signing secrets
+        shell: bash
+        env:
+          STORE_PASSWORD: ${{ secrets.OPTITRADE_ANDROID_STORE_PASSWORD }}
+          KEY_PASSWORD: ${{ secrets.OPTITRADE_ANDROID_KEY_PASSWORD }}
+        run: |
+          test -n "$STORE_PASSWORD" || (echo "Missing OPTITRADE_ANDROID_STORE_PASSWORD secret" && exit 1)
+          test -n "$KEY_PASSWORD" || (echo "Missing OPTITRADE_ANDROID_KEY_PASSWORD secret" && exit 1)
 
       - name: Build signed release APK
         working-directory: android-app
@@ -53,6 +62,7 @@ jobs:
         run: |
           APKSIGNER="$ANDROID_HOME/build-tools/35.0.0/apksigner"
           APK="android-app/app/build/outputs/apk/release/app-release.apk"
+          test -f "$APK" || (echo "Release APK was not created" && exit 1)
           "$APKSIGNER" verify --verbose --print-certs "$APK"
           cp "$APK" OptiTrade.apk
           sha256sum OptiTrade.apk > OptiTrade.apk.sha256
