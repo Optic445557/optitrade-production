@@ -1,0 +1,23 @@
+OptiTrade v2.11.19 — Render Production Package
+
+Prepared for:
+- GitHub private repository
+- Render Node Web Service
+- Render persistent SQLite disk at /var/data
+- optiprotrade.online
+- Cloudflare DNS
+- Resend branded OptiTrade mailer
+
+Security:
+- .env excluded
+- local database excluded
+- node_modules excluded
+- database/WAL/SHM excluded
+- Render generates session/OTP secrets
+- admin and Resend credentials are entered only in Render
+
+Run before deployment:
+  npm run production-check
+
+Health endpoint:
+  /api/health

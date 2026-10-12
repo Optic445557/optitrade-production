@@ -1,0 +1,16 @@
+OptiTrade v2.11.10 — Investment Request Crash Fix
+
+What was fixed:
+- Added the missing money() formatter used in the investment-plan flow.
+- Prevented the admin investment notification from being able to crash the whole server.
+- This fixes the "ReferenceError: money is not defined" error that stopped the server when creating an investment plan request.
+
+Files included:
+- server/app.js
+- package.json
+
+This is a patch-only ZIP.
+It does NOT include:
+- .env
+- database/
+- node_modules/

@@ -1,0 +1,29 @@
+OptiTrade v2.11.22 — Production Deposit Wallet Visibility Fix
+
+Problem addressed:
+An administrator could save/edit a receiving wallet in the live Admin panel while customers still failed to see it on the Deposit page.
+
+Fixes:
+- Global deposit wallets now resolve against the configured production ADMIN_EMAIL Super Admin.
+- If more than one Super Admin exists, the configured production admin is preferred instead of blindly using the oldest account.
+- Legacy `admin` users managing global wallets are mapped to the real global wallet scope.
+- Super Admin/global wallet create/edit/enable/delete actions now use one consistent global owner ID.
+- Customer `/api/deposit/options` is explicitly no-cache.
+- Render logs now show:
+  [DEPOSIT OPTIONS] user=... owner=... globalAdmin=... wallets=...
+- Admin Wallet page shows active count clearly.
+- Editing a disabled wallet now warns that it remains hidden until Enable is clicked.
+- After save, the Admin page tells you whether the wallet is actually customer-visible.
+- Customer Deposit page gets a clearer no-wallet message and Check again button.
+
+Important:
+Only Active wallets are visible to customers.
+A saved wallet that says Disabled must be enabled from the Admin wallet card.
+
+Patch only:
+- server/app.js
+- admin/wallets.html
+- public/deposit.html
+- package.json
+
+No .env, database, node_modules, or Render secrets are included.

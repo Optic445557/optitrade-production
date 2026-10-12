@@ -1,0 +1,85 @@
+services:
+  - type: web
+    name: optiprotrade
+    runtime: node
+    plan: starter
+    buildCommand: npm ci --omit=dev
+    startCommand: npm start
+    healthCheckPath: /api/health
+
+    disk:
+      name: optiprotrade-data
+      mountPath: /var/data
+      sizeGB: 1
+
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: TRUST_PROXY
+        value: "true"
+      - key: DB_PATH
+        value: /var/data/optitrade.db
+      - key: BACKUP_DIR
+        value: /var/data/backups
+      - key: APP_BASE_URL
+        value: https://optiprotrade.online
+      - key: HSTS_ENABLED
+        value: "true"
+
+      - key: EMAIL_PROVIDER
+        value: resend
+      - key: EMAIL_SMTP_FALLBACK
+        value: "false"
+
+      - key: SESSION_SECRET
+        generateValue: true
+      - key: OTP_PEPPER
+        generateValue: true
+
+      - key: ADMIN_EMAIL
+        sync: false
+      - key: ADMIN_PASSWORD
+        sync: false
+      - key: SUPPORT_EMAIL
+        sync: false
+      - key: RESEND_API_KEY
+        sync: false
+      - key: RESEND_FROM
+        sync: false
+
+      - key: TELEGRAM_ENCRYPTION_KEY
+        generateValue: true
+
+      - key: WALLETCONNECT_PROJECT_ID
+        sync: false
+      - key: ETHERSCAN_API_KEY
+        sync: false
+      - key: RPC_ETHEREUM
+        sync: false
+      - key: RPC_BASE
+        sync: false
+      - key: RPC_ARBITRUM
+        sync: false
+      - key: RPC_OPTIMISM
+        sync: false
+      - key: RPC_BSC
+        sync: false
+      - key: RPC_POLYGON
+        sync: false
+
+      - key: IP_GEOLOCATION_ENABLED
+        value: "true"
+
+      - key: SUMSUB_APP_TOKEN
+        sync: false
+      - key: SUMSUB_SECRET_KEY
+        sync: false
+      - key: SUMSUB_WEBHOOK_SECRET
+        sync: false
+      - key: SUMSUB_LEVEL_NAME
+        value: basic-kyc-level
+
+      - key: KRAKEN_API_KEY
+        sync: false
+      - key: KRAKEN_API_SECRET
+        sync: false

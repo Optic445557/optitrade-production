@@ -1,0 +1,16 @@
+OptiTrade v2.11.5 - Registration trace + verification redirect
+
+What changed
+- Registration validates all 3 steps before submitting.
+- Any blocked field now produces a large visible message instead of silently returning to a previous step.
+- Successful registration always opens /verify.html.
+- CMD now prints [REGISTER REQUEST], [REGISTER RESPONSE], and [REGISTRATION OTP SENT].
+- Registration and verification JavaScript are cache-busted and served no-store.
+
+Test
+1. Stop server with Ctrl+C.
+2. Run npm start.
+3. Open registration and press Ctrl+F5 once.
+4. Complete all 3 steps and Create account.
+5. CMD should immediately show [REGISTER REQUEST].
+6. On success it should show [REGISTRATION OTP SENT] and the browser should open the verification-code page.

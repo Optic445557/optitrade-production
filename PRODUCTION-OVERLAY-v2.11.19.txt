@@ -1,0 +1,16 @@
+OptiTrade v2.11.19 — Mailer + Production Overlay
+
+Extract this ZIP over the existing real optitrade-v1 folder.
+
+Adds:
+- branded OptiTrade mailer
+- Render Blueprint
+- persistent SQLite disk configuration
+- GitHub ignore rules
+- Render environment example
+- production deployment instructions
+
+Does not include:
+- .env
+- database
+- node_modules

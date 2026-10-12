@@ -1,0 +1,38 @@
+<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Telegram Alerts • OptiTrade Admin</title><link rel="stylesheet" href="/admin/admin-v2.css"></head><body>
+<div class="shell"><aside class="side"><div class="brand">Opti<i>Trade</i></div><nav class="nav"><a href="/admin/dashboard.html">Overview</a><a href="/admin/users-v2.html">Users</a><a href="/admin/managed-trades.html">Managed Trading</a><a href="/admin/message-center.html">Message Center</a><a href="/admin/email.html">Email Delivery</a><a href="/admin/readiness.html">System Readiness</a><a href="/admin/telegram.html" class="active">Telegram Alerts</a><a href="/admin/welcome.html">Welcome Message</a><a href="/admin/banners.html">Banner Manager</a><a href="/admin/deposits.html">Deposits</a><a href="/admin/withdrawals.html">Withdrawals</a><a href="/admin/wallets.html">Deposit Wallets</a><a href="/admin/support.html">Support Inbox</a><a href="/admin/admins.html">Admin Management</a></nav></aside>
+<main class="main"><div class="notice urgent-telegram-note"><b>Urgent alerts</b><p>Deposit, withdrawal and trade requests are always treated as urgent Telegram events whenever Telegram Alerts are enabled. They also appear in the Attention Center and blinking bell.</p></div><div class="top"><div><h1>Telegram Alerts</h1><span class="muted">Connect your own Telegram bot and chat so alerts for your customers reach you directly.</span></div></div>
+<div class="grid2 telegram-settings-grid"><section class="panel"><div class="panel-head"><div><h2>My Telegram Connection</h2><p class="muted">Each Admin stores a separate Bot Token and Chat ID.</p></div><span id="connectionBadge" class="telegram-state">Not configured</span></div>
+<form id="tgForm" class="form">
+<label class="wide">Bot Token<input id="botToken" type="password" autocomplete="new-password" placeholder="123456789:AA..."></label>
+<p class="muted wide">For security the saved token is never displayed again. Leave this field blank later if you only want to change your Chat ID or alert types.</p>
+<label class="wide">Chat ID<input id="chatId" autocomplete="off" placeholder="e.g. 123456789 or -1001234567890"></label>
+<label class="switch-row wide"><input id="enabled" type="checkbox" checked><span>Telegram alerts enabled</span></label>
+<div class="wide telegram-event-box"><h3>Alerts I want</h3>
+<label><input type="checkbox" data-event="registration" checked> New registration</label>
+<label><input type="checkbox" data-event="deposit" checked> New deposit</label>
+<label><input type="checkbox" data-event="withdrawal" checked> New withdrawal</label>
+<label><input type="checkbox" data-event="trade" checked> New trade</label>
+<label><input type="checkbox" data-event="support" checked> Customer Help Center message</label>
+<label><input type="checkbox" data-event="referral_click" checked> Registration link opened (IP + approximate location)</label>
+</div>
+<div class="wide telegram-actions"><button class="btn" id="saveBtn">Save Telegram Settings</button><button class="btn ghost" type="button" id="testBtn">Send Test Alert</button><button class="btn danger" type="button" id="removeBtn">Remove</button></div>
+<div id="tgStatus" class="muted wide"></div>
+</form></section>
+<section class="panel"><h2>How it works</h2><div class="telegram-help">
+<div><span>1</span><p>Create a bot with <b>@BotFather</b> in Telegram and copy its bot token.</p></div>
+<div><span>2</span><p>Start a chat with that bot (or add it to your group/channel), then use the Chat ID for the destination.</p></div>
+<div><span>3</span><p>Save the token and Chat ID here, then press <b>Send Test Alert</b>.</p></div>
+</div>
+<div class="notice telegram-security-note"><b>Security</b><p>Your bot token is stored encrypted on the server and is never returned to the browser after saving.</p></div>
+<div class="telegram-current"><span>Connected bot</span><b id="botName">—</b><span>Current chat</span><b id="currentChat">—</b></div>
+</section></div></main></div>
+<script>
+(()=>{const $=id=>document.getElementById(id);let configured=false;
+function status(msg,ok=true){tgStatus.textContent=msg;tgStatus.className='wide '+(ok?'telegram-ok':'telegram-error')}
+function events(){return [...document.querySelectorAll('[data-event]:checked')].map(x=>x.dataset.event)}
+async function load(){let r=await fetch('/api/admin/telegram-settings');if(r.status===401||r.status===403)return location='/login.html';let d=await r.json();configured=d.configured;chatId.value=d.chatId||'';enabled.checked=d.configured?!!d.enabled:true;document.querySelectorAll('[data-event]').forEach(x=>x.checked=(d.events||[]).includes(x.dataset.event));connectionBadge.textContent=d.configured?(d.enabled?'Connected':'Disabled'):'Not configured';connectionBadge.classList.toggle('connected',!!d.configured&&!!d.enabled);botName.textContent=d.botUsername?'@'+d.botUsername:(d.configured?'Configured':'—');currentChat.textContent=d.chatId||'—';removeBtn.hidden=!d.configured;testBtn.disabled=!d.configured}
+tgForm.onsubmit=async e=>{e.preventDefault();saveBtn.disabled=true;status('Saving…');try{let r=await fetch('/api/admin/telegram-settings',{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({botToken:botToken.value.trim(),chatId:chatId.value.trim(),enabled:enabled.checked,events:events()})}),d=await r.json();if(!r.ok)return status(d.error||'Could not save Telegram settings.',false);botToken.value='';status('Telegram settings saved.');await load()}finally{saveBtn.disabled=false}};
+testBtn.onclick=async()=>{testBtn.disabled=true;status('Sending test alert…');try{let r=await fetch('/api/admin/telegram-settings/test',{method:'POST'}),d=await r.json();if(!r.ok)return status(d.error||'Test failed.',false);status('Test alert sent to Telegram.')}finally{testBtn.disabled=false}};
+removeBtn.onclick=async()=>{if(!(await appConfirm('Remove your saved Telegram bot connection?',{title:'Remove Telegram connection',confirmText:'Remove',danger:true})))return;let r=await fetch('/api/admin/telegram-settings',{method:'DELETE'});if(r.ok){botToken.value='';chatId.value='';status('Telegram connection removed.');load()}};
+load()})();
+</script><script src="/admin/admin-common.js"></script></body></html>

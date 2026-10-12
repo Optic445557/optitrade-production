@@ -1,0 +1,66 @@
+OPTITRADE 2.10.0 — PERSISTENT TRADE RESERVE
+
+Trade with OptiTrade now has a persistent Trade Reserve.
+
+CUSTOMER VIEW
+The Trade with OptiTrade section shows:
+- Total Trade Reserve
+- Committed to open trades
+- Free to Re-trade / Move
+- Realized P/L
+- Available USD wallet
+- Active / pending managed request counts
+
+NEW TRADE FUNDING
+When a customer submits a new Trade with OptiTrade request:
+1. Free Trade Reserve is used first.
+2. Available USD wallet supplies only the difference.
+3. The review summary shows the exact source breakdown before submission.
+
+SETTLEMENT
+When an administrator settles Trade with OptiTrade:
+- principal does NOT automatically return to Available Balance;
+- profit/loss is applied inside the Trade Reserve;
+- the resulting value remains in Trade Reserve;
+- the customer can immediately reuse free reserve for another Trade with OptiTrade request.
+
+This also applies to a successfully closed/reconciled Kraken-routed Trade with OptiTrade position.
+
+DECLINED MANAGED REQUEST
+A declined pending Trade with OptiTrade request releases its principal back to FREE Trade Reserve rather than automatically sending it to Available Balance.
+
+MOVE TO AVAILABLE BALANCE
+Customer can click:
+  Move to Available Balance
+
+The customer chooses an amount and enters the 4-digit transaction PIN.
+
+Only FREE Trade Reserve can move.
+Funds committed to pending/active trades cannot move.
+
+This is an internal balance move, not an external withdrawal.
+Total account value does not change.
+
+SELF-DIRECTED TRADING
+Self-Directed Trading keeps its existing settlement behavior.
+This persistent reserve applies to Trade with OptiTrade.
+
+REALIZED P/L
+The reserve section shows cumulative realized P/L from settled Trade with OptiTrade requests.
+Active trades do not show realized P/L until settlement.
+
+NO DATABASE RESET REQUIRED.
+
+New managed trade columns are added non-destructively:
+- wallet_funded_amount
+- reserve_funded_amount
+
+Keep:
+  .env
+  database/
+  node_modules/
+
+Then run:
+  npm run audit
+  npm run smoke-test
+  npm start

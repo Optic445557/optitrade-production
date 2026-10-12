@@ -1,0 +1,23 @@
+OptiTrade v2.12.0 — Combined Domain + Android + Trusted Device Release
+
+Includes all pending changes:
+- v2.11.20 login OTP delivery tracing
+- v2.11.21 Help Center polish: one welcome message + distinctive quick questions
+- v2.11.22 production deposit-wallet visibility fix
+- optiprotrade.online Android download page and homepage links
+- robots.txt + sitemap.xml + canonical homepage metadata for Search Console
+- security.txt contact document
+- Android Studio project pointed only at https://optiprotrade.online
+- customer trusted-device backend with 90-day tokens
+- Android Keystore encrypted token storage
+- fingerprint / face / device-credential unlock for trusted app sessions
+- Security -> Trusted Devices list, revoke one, revoke all
+- password reset/change revokes trusted devices
+- GitHub Actions workflow to build a TEST/debug APK artifact
+
+Important production notes:
+- APP_BASE_URL should be https://optiprotrade.online on Render.
+- The public APK must be a signed RELEASE build using one permanent signing key.
+- Do not commit the signing keystore, signing passwords, .env, database, or node_modules.
+- The test/debug GitHub Actions APK is for device testing only, not the permanent public download.
+- Place the final signed release file at public/downloads/OptiTrade.apk.

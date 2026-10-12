@@ -1,0 +1,115 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>OptiTrade Mailer • Admin</title><link rel="stylesheet" href="/admin/admin-v2.css"></head>
+<body><div class="shell"><aside class="side"><div class="brand">Opti<i>Trade</i></div>
+<nav class="nav"><a href="/admin/dashboard.html">Overview</a><a href="/admin/users-v2.html">Users</a><a href="/admin/managed-trades.html">Trade Requests</a><a href="/admin/message-center.html" class="active">OptiTrade Mailer</a><a href="/admin/deposits.html">Deposits</a><a href="/admin/withdrawals.html">Withdrawals</a><a href="/admin/wallets.html">Deposit Wallets</a><a href="/admin/support.html">Support Inbox</a><a href="/admin/admins.html">Admin Management</a></nav></aside>
+<main class="main"><div class="top"><div><h1>OptiTrade Mailer</h1><span class="muted">Send branded OptiTrade™ email and in-app notifications for updates, warnings, security, transactions and announcements.</span></div></div>
+
+<div class="mailer-layout">
+<section class="panel mailer-compose"><div class="panel-head"><div><h2>Compose Message</h2><p class="muted">The email automatically uses the OptiTrade™ wordmark, logo mark, colors, footer and verified sender configuration.</p></div></div>
+<div class="form msg-form">
+<label>Message type<select id="messageType">
+<option value="notification">Notification</option>
+<option value="warning">Warning</option>
+<option value="security">Security Alert</option>
+<option value="deposit">Deposit Update</option>
+<option value="withdrawal">Withdrawal Update</option>
+<option value="trade">Trading Update</option>
+<option value="investment">Investment Update</option>
+<option value="system">System Update</option>
+<option value="announcement">Announcement</option>
+</select></label>
+
+<label>Recipients<select id="mode"><option value="all">All my customers</option><option value="selected">Selected customers</option></select></label>
+
+<label>Action<select id="actionHref">
+<option value="/dashboard.html">Dashboard</option>
+<option value="/transactions.html">Transactions</option>
+<option value="/security.html">Security</option>
+<option value="/deposit.html">Deposit</option>
+<option value="/withdraw.html">Withdrawal</option>
+<option value="/investments.html">Investments</option>
+<option value="/trade.html">Trading</option>
+<option value="/support.html">Support</option>
+</select></label>
+
+<div id="picker" class="wide customer-picker" hidden>
+  <div class="picker-top"><input id="find" placeholder="Search customers"><button class="btn ghost" id="selectAll" type="button">Select visible</button></div>
+  <div id="customers" class="customer-list"></div>
+</div>
+
+<label class="wide">Email subject<input id="subject" maxlength="150" placeholder="Important OptiTrade account update"></label>
+<label class="wide">Message<textarea id="body" rows="8" maxlength="5000" placeholder="Write the account message customers should receive..."></textarea></label>
+
+<label>Button text<input id="actionLabel" maxlength="40" value="Open OptiTrade"></label>
+<div class="mailer-channel-box"><span>Delivery channels</span><label><input type="checkbox" id="email" checked> Branded Email</label><label><input type="checkbox" id="inapp" checked> In-App Notification</label></div>
+
+<div class="wide mailer-safety-note"><b>Sender protection</b><span>The mailer always uses the configured OptiTrade Resend/SMTP sender. Admins cannot spoof or replace the From address from this page.</span></div>
+
+<div class="wide"><button id="send" class="btn mailer-send">Send OptiTrade Message</button> <span id="status" class="muted"></span></div>
+</div></section>
+
+<section class="panel mailer-preview-panel"><div class="panel-head"><div><h2>Email Preview</h2><p class="muted">Approximation of the branded email customers will receive.</p></div></div>
+<div id="emailPreview" class="ot-mail-preview notification">
+  <div class="ot-mail-preview-head"><div class="ot-mail-logo-mark">↗</div><div><div class="ot-mail-wordmark">Opti<span>Trade</span><sup>™</sup></div><small>OFFICIAL OPTITRADE COMMUNICATION</small></div></div>
+  <div class="ot-mail-preview-body">
+    <div id="previewBadge" class="ot-mail-badge">ACCOUNT NOTIFICATION</div>
+    <h3 id="previewSubject">Important OptiTrade account update</h3>
+    <p class="ot-mail-intro">Hello Customer,</p>
+    <p id="previewBody">Your message preview appears here.</p>
+    <button id="previewButton" type="button">Open OptiTrade →</button>
+  </div>
+  <div class="ot-mail-preview-foot">OptiTrade™ Support Team • Never share your password, PIN or verification code by email.</div>
+</div>
+</section>
+</div>
+
+<section class="panel mailer-history-panel"><div class="panel-head"><div><h2>Mailer History</h2><p class="muted">Recent campaigns, delivery type and completion status.</p></div><button id="refreshHistory" class="btn ghost">Refresh</button></div><div id="history" class="list"></div></section>
+</main></div><div id="toast" class="toast"></div>
+
+<script>
+const esc=s=>String(s??'').replace(/[&<>"]/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[m]));
+const typeMeta={
+ notification:{label:'ACCOUNT NOTIFICATION'},
+ warning:{label:'IMPORTANT WARNING'},
+ security:{label:'SECURITY ALERT'},
+ deposit:{label:'DEPOSIT UPDATE'},
+ withdrawal:{label:'WITHDRAWAL UPDATE'},
+ trade:{label:'TRADING UPDATE'},
+ investment:{label:'INVESTMENT UPDATE'},
+ system:{label:'SYSTEM UPDATE'},
+ announcement:{label:'OPTITRADE ANNOUNCEMENT'}
+};
+let allCustomers=[];
+async function api(url,opt){let r=await fetch(url,opt);if(r.status===401||r.status===403){location='/login.html';throw 0}let d={};try{d=await r.json()}catch{}if(!r.ok)throw new Error(d.error||'Request failed');return d}
+async function loadCustomers(){let d=await api('/api/admin/message-center/customers');allCustomers=d.customers;renderCustomers()}
+function renderCustomers(){let q=find.value.trim().toLowerCase();customers.innerHTML=allCustomers.filter(x=>!q||(`${x.name} ${x.username||''} ${x.email}`).toLowerCase().includes(q)).map(x=>`<label class="customer-choice"><input type="checkbox" value="${x.id}"><span><b>${esc(x.name)}</b><small>${esc(x.email)}</small></span></label>`).join('')||'<p class="muted">No customers found.</p>'}
+async function loadHistory(){let d=await api('/api/admin/message-center/campaigns');history.innerHTML=d.campaigns.map(c=>`<div class="item mailer-history-row"><div><span class="mailer-type-chip ${esc(c.message_type||'notification')}">${esc((c.message_type||'notification').replaceAll('_',' '))}</span><b>${esc(c.subject)}</b><small>${esc(c.sender_name||'Admin')} • ${new Date(c.created_at+'Z').toLocaleString()}</small></div><div class="campaign-stats"><span>${esc(c.status)}</span><span>${c.total||0} recipients</span><span>${c.delivered||0} completed</span><span>${c.failed||0} failed</span></div></div>`).join('')||'<p class="muted">No messages sent yet.</p>'}
+mode.onchange=()=>picker.hidden=mode.value!=='selected';find.oninput=renderCustomers;
+selectAll.onclick=()=>document.querySelectorAll('#customers input[type=checkbox]').forEach(x=>x.checked=true);
+function preview(){
+ const kind=messageType.value||'notification',meta=typeMeta[kind]||typeMeta.notification;
+ emailPreview.className=`ot-mail-preview ${kind}`;
+ previewBadge.textContent=meta.label;
+ previewSubject.textContent=subject.value||'Important OptiTrade account update';
+ previewBody.textContent=body.value||'Your message preview appears here.';
+ previewButton.textContent=(actionLabel.value||'Open OptiTrade')+' →';
+}
+[messageType,subject,body,actionLabel].forEach(x=>x.addEventListener('input',preview));
+messageType.onchange=preview;
+send.onclick=async()=>{
+ try{
+  send.disabled=true;status.textContent='Queuing branded message…';
+  let userIds=[...document.querySelectorAll('#customers input:checked')].map(x=>+x.value);
+  let d=await api('/api/admin/message-center/send',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({
+    mode:mode.value,userIds,subject:subject.value,body:body.value,sendEmail:email.checked,sendInapp:inapp.checked,
+    messageType:messageType.value,actionHref:actionHref.value,actionLabel:actionLabel.value
+  })});
+  status.textContent=`Queued ${messageType.value} message for ${d.queued} customer${d.queued===1?'':'s'}.`;
+  subject.value='';body.value='';preview();setTimeout(loadHistory,800)
+ }catch(e){status.textContent=e.message||'Could not send message.'}
+ finally{send.disabled=false}
+};
+refreshHistory.onclick=loadHistory;
+preview();loadCustomers();loadHistory();setInterval(()=>{if(!document.hidden)loadHistory()},6000);
+</script><script src="/admin/admin-common.js"></script></body></html>

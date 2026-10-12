@@ -1,0 +1,46 @@
+OPTITRADE FINAL PRODUCTION POLISH 2.11.0
+
+This build is a final UI/cleanup pass on the cumulative application.
+
+REMOVED / CLEANED
+- Removed old user-facing demo-named visual classes and renamed them to neutral status-pill classes.
+- Removed unfinished Copy Trading / Trading Bots sidebar placeholders.
+- Removed the non-functional Google login "Coming soon" control.
+- Converted informational red Trade warnings to the normal blue information notice style.
+- Converted local OTP testing notices from red error styling to amber admin warning styling.
+- Removed superseded stage release-note files from the project root.
+
+NOT REMOVED
+- Real error/rejection states remain visually red where that color communicates an actual failure or rejected action.
+- Internal legacy database identifiers are preserved where changing them could endanger historical account/transaction compatibility; they are not shown to customers.
+
+CURRENT CORE FLOWS RETAINED
+- Registration + email verification OTP
+- Login OTP + forgot-password OTP
+- Deposit receipt -> Admin Accept & Credit / Decline
+- Withdrawal review
+- Admin urgent Attention Center + Telegram alerts
+- Self-Directed Trading
+- Trade with OptiTrade review summary
+- Persistent Trade Reserve + realized P/L + re-trade / move to Available Balance
+- Investment Plans / active investment lifecycle
+- Internal Transfers
+- KYC / eligibility controls
+- Exchange integration controls
+- Dashboard rotating welcome/testimonial/account-notification banner
+- Production readiness + launch audit
+
+NO DATABASE RESET REQUIRED.
+
+KEEP FROM YOUR CURRENT WORKING FOLDER:
+  .env
+  database/
+  node_modules/
+
+FINAL LOCAL CHECK:
+  npm run cleanup-legacy
+  npm run audit
+  npm run smoke-test
+  npm start
+
+VERSION: 2.11.0

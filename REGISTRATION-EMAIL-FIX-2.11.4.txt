@@ -1,0 +1,13 @@
+OptiTrade v2.11.4 — Registration + Email Verification Fix
+
+Changes:
+- Prevented the Create Account button from falling back to a native form reload.
+- Added a safe fallback to /verify.html if an older cached registration page is missing the OTP modal.
+- Added cache-busting for registration CSS/JavaScript.
+- Added no-store headers for /register.html and /js/register.js.
+- Registration now waits for the email provider response before reporting that the OTP email was queued.
+- If Resend rejects a registration OTP, the verification screen now shows a clear warning and the failure is logged.
+- TRUST_PROXY=true added for Cloudflare Tunnel / reverse-proxy use.
+
+Important:
+Restart npm after replacing the files, then hard-refresh the registration page (Ctrl+F5).

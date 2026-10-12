@@ -1,0 +1,15 @@
+OptiTrade v2.11.14 — Compact Help Center Quick Questions
+
+- Shows only the first 4 automatic/quick questions by default.
+- Arranges them compactly as a 2 x 2 grid.
+- Adds Show more (N) to reveal the rest.
+- Adds Show less to collapse them again.
+- After a quick answer is selected, the questions collapse back so the answer and other chat messages stay visible.
+- The user can still type a normal support message at any time.
+
+Patch-only:
+- public/js/account-support.js
+- public/css/pages.css
+- package.json
+
+No .env, database, or node_modules are included.

@@ -1,0 +1,25 @@
+OptiTrade v2.11.9 — Deposit Response-First Fix
+
+Root cause addressed:
+The deposit POST route was still doing extra work before replying to the browser:
+- optional blockchain verification
+- customer notification creation
+- urgent administrator notification
+- account activity logging
+
+If one of those downstream operations was slow or threw unexpectedly, the browser could remain on "Submitting…" even though a receipt might already have been inserted.
+
+What changed:
+- The receipt is inserted into SQLite first.
+- OptiTrade immediately returns HTTP 202 with the receipt number.
+- Blockchain verification runs in the background.
+- Customer email/in-app notification runs after the response.
+- Admin/Telegram notification runs after the response.
+- Activity logging runs after the response.
+- Added explicit deposit request/receipt logs in CMD.
+- Added an idempotency ID so retrying a timed-out request cannot create a duplicate receipt.
+- Removed the submit-time market-price fallback. The server uses the signed quote already shown to the customer.
+- Browser submit timeout reduced to 8 seconds because the route should now return almost immediately.
+
+This is a patch-only build.
+It does NOT contain .env, database/, or node_modules/.

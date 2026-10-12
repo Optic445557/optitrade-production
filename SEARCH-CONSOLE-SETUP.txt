@@ -1,0 +1,26 @@
+Google Search Console setup for optiprotrade.online
+
+1. Open Google Search Console and choose Add property.
+2. Choose DOMAIN property, not URL-prefix.
+3. Enter only: optiprotrade.online
+   Do not type https:// and do not type www.
+4. Google will give you a TXT verification value beginning with:
+   google-site-verification=...
+5. In Cloudflare -> optiprotrade.online -> DNS -> Add record:
+   Type: TXT
+   Name: @
+   Content: paste the exact Google verification value
+   TTL: Auto
+   Keep the TXT record after verification. It does not disturb Render or Resend records.
+6. Return to Search Console and click Verify.
+7. Open Security & Manual Actions -> Security issues. Confirm Google reports no security problems.
+8. Open Security & Manual Actions -> Manual actions. Confirm there are no manual actions.
+9. After deploying OptiTrade v2.12.0, open Sitemaps and submit:
+   https://optiprotrade.online/sitemap.xml
+10. Use URL Inspection for:
+   https://optiprotrade.online/
+   Click Test live URL, then Request indexing if the live test is indexable.
+11. After the APK download page is live, inspect and request indexing for:
+   https://optiprotrade.online/download-app.html
+
+The v2.12.0 patch adds robots.txt, sitemap.xml and canonical homepage metadata. Search Console verification/indexing can help Google recrawl the real site, but it does not guarantee that an AI Overview or third-party reputation score changes immediately.

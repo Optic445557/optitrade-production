@@ -1,0 +1,28 @@
+OPTITRADE 2.11.1 — CUSTOM CONFIRMATION DIALOGS
+
+All browser-native confirmation/prompt/alert boxes used by the current runtime UI have been replaced with styled OptiTrade dialogs.
+
+Covered actions include:
+- Deposit sent confirmation
+- Deposit Accept & Credit / decline / historical correction
+- Move Trade Reserve to Available Balance
+- Cancel pending investment
+- Investment settlement / early settlement
+- Withdrawal approval
+- Admin balance reversal and high-value adjustments
+- Receiving-wallet deletion
+- Connected-wallet removal
+- Banner deletion
+- Welcome / Quick Help reset
+- Telegram removal
+- Kraken Close & Reconcile
+- Kraken CANCEL ALL emergency confirmation
+- Other informational alerts previously shown by the browser
+
+The dialogs are responsive on desktop/mobile and support:
+- Confirm / Cancel
+- Destructive-action styling
+- Required input/reason fields
+- X / outside-click / Escape dismissal
+
+No database reset required.

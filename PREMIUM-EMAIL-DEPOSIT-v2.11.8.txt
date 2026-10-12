@@ -1,0 +1,20 @@
+OptiTrade v2.11.8 — Premium Email + Deposit No-Hang Fix
+
+Premium email:
+- More polished OptiTrade banner/header.
+- Mobile-friendly table layout for Gmail/Outlook.
+- Branded action button, status badge, support footer, and OptiTrade signature.
+- Transaction notifications, OTP emails, welcome emails, campaigns, and email tests inherit the branded email system.
+
+Deposit:
+- Deposit quote now receives a signed server quote token.
+- Clicking "I've Sent Payment" no longer re-fetches a live market price on the server.
+- Deposit submission uses the signed quote already shown to the user.
+- Market requests have timeouts and stale-cache fallback.
+- Browser quote/submit requests have timeouts, so the button cannot spin forever.
+- Older browser tabs still have a compatibility fallback, but it fails fast rather than hanging.
+
+Patch only:
+- Does not include .env
+- Does not include database/
+- Does not include node_modules/

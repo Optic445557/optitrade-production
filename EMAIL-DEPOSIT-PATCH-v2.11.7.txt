@@ -1,0 +1,17 @@
+OptiTrade v2.11.7 — Branded notification emails + deposit submit flow fix
+
+Included files:
+- server/app.js
+- public/deposit.html
+- package.json
+
+What changed:
+1. Transactional notification emails now use a branded OptiTrade HTML banner/card design.
+2. The same visual email frame is applied to OTP / verification emails for a more consistent look.
+3. Deposit flow was improved so clicking "I've Sent Payment" no longer gets stuck waiting on the quote.
+4. Deposit submit now fetches the latest conversion immediately and shows clearer errors when the receipt cannot be created.
+
+This patch does NOT include:
+- .env
+- database/
+- node_modules/

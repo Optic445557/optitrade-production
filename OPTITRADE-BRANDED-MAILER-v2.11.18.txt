@@ -1,0 +1,38 @@
+OptiTrade v2.11.18 — Branded Mailer
+
+What was added:
+- Message Center upgraded to "OptiTrade Mailer".
+- All mailer emails use the OptiTrade™ wordmark/logo mark, blue brand header, branded footer and support identity.
+- Email types:
+  • Notification
+  • Warning
+  • Security Alert
+  • Deposit Update
+  • Withdrawal Update
+  • Trading Update
+  • Investment Update
+  • System Update
+  • Announcement
+- Each type has its own status badge/accent while keeping the OptiTrade blue brand.
+- Admin can choose the internal OptiTrade action button destination and button text.
+- Live admin email preview.
+- Campaign history now shows message type.
+- Campaign email delivery logs include the campaign type and user reference.
+- From-address spoofing is not allowed from the admin page; the configured Resend/SMTP sender is always used.
+- Automatic account notifications and OTP/security emails use the same branded email system.
+
+Database:
+- Adds message_type, action_href and action_label columns to message_campaigns automatically.
+- Existing campaigns remain compatible.
+
+Trademark note:
+- The template displays OptiTrade™. Use ® only after the brand is formally registered and entitled to use the registered mark.
+
+Patch-only:
+- server/app.js
+- admin/message-center.html
+- admin/admin-common.js
+- admin/admin-v2.css
+- package.json
+
+No .env, database/, or node_modules/ are included.

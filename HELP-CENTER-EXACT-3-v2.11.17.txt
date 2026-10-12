@@ -1,0 +1,16 @@
+OptiTrade v2.11.17 — Exact 3 Quick Questions
+
+- Exactly 3 quick questions are visible by default.
+- Every other quick question is stored in a separate hidden See More section.
+- "See more questions" opens the hidden questions.
+- "Hide extra questions" closes them again.
+- The hidden section uses the HTML hidden attribute plus CSS !important, so all remaining questions cannot leak into the main list.
+- Blue quick-question styling remains.
+- Welcome message and reusable answers remain.
+
+Patch-only:
+- public/js/account-support.js
+- public/css/pages.css
+- package.json
+
+No .env, database, or node_modules are included.

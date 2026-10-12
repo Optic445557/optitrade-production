@@ -1,0 +1,22 @@
+OptiTrade v2.11.20 — Login OTP Delivery Trace
+
+Purpose:
+- Makes successful login OTP delivery visible in Render logs.
+- Logs the masked recipient, account role, provider and provider message ID.
+- Logs both initial login OTP sends and resend attempts.
+- Does not expose the OTP code.
+- Does not log the full email address.
+- Keeps existing behavior: the login page only advances after the email provider accepts the message.
+
+Expected Render log after an admin login attempt:
+[LOGIN OTP REQUEST] user=... role=super_admin recipient=to******@gmail.com
+[EMAIL ACCEPTED] category=login_otp recipient=to******@gmail.com provider=resend message=<resend-id>
+[LOGIN OTP SENT] user=... role=super_admin recipient=to******@gmail.com provider=resend message=<resend-id>
+
+If provider=resend and a message ID appears, use that ID to confirm you are looking at the same Resend account/project whose API key is configured in Render.
+
+Patch only:
+- server/app.js
+- package.json
+
+No .env, database or node_modules.

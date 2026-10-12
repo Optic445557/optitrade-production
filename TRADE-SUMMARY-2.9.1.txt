@@ -1,0 +1,27 @@
+OPTITRADE 2.9.1 — TRADE WITH OPTITRADE REVIEW SUMMARY
+
+Before a customer can submit Trade with OptiTrade, the app now shows a Review Summary.
+
+The summary includes:
+- Amount
+- Current available USD wallet
+- Wallet balance after reservation
+- Market preference
+- Preferred pair
+- Customer note
+- Pending Admin Review status
+
+The customer must tick:
+  "I have reviewed the amount, market preference and reservation details."
+
+Only then is Confirm & Submit enabled.
+
+Nothing is reserved or submitted while the review modal is open.
+
+When the customer confirms, the existing server-side Trade with OptiTrade flow runs:
+- funds move from Wallet USD to Trading reserve
+- request becomes Pending
+- assigned admin / Super Admin Attention Center receives the urgent request
+- Telegram urgent alert is sent when configured
+
+No database reset required.

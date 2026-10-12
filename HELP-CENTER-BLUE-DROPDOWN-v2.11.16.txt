@@ -1,0 +1,19 @@
+OptiTrade v2.11.16 — Blue Quick Questions + Dropdown
+
+Changes:
+- Quick questions now use the OptiTrade blue color instead of the dark card color.
+- The first 4 questions remain compact in a 2 x 2 mobile-friendly layout.
+- "Show more" is replaced by a full-width dropdown-style row:
+  • More quick questions
+  • Shows how many extra questions are available
+  • Down-arrow rotates when opened
+  • Tap again to collapse
+- Previously viewed quick questions remain usable.
+- The welcome panel from v2.11.15 remains intact.
+
+Patch-only:
+- public/js/account-support.js
+- public/css/pages.css
+- package.json
+
+No .env, database, or node_modules are included.

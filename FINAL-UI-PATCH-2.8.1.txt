@@ -1,0 +1,25 @@
+OPTITRADE FINAL UI PATCH 2.8.1
+
+Dashboard banner cleanup
+
+Removed the extra static "OptiTrade Account" blue banner that appeared above the rotating dashboard carousel.
+
+The rotating carousel remains in place for:
+- Welcome messages
+- Testimonials
+- Account notifications
+- Admin-created banners
+
+This keeps only one banner area on the customer dashboard and avoids the stacked/double-banner appearance.
+
+No database reset is required.
+
+Keep your existing:
+- .env
+- database/
+- node_modules/
+
+Then run:
+  npm run audit
+  npm run smoke-test
+  npm start

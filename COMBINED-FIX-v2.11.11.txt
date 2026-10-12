@@ -1,0 +1,21 @@
+OptiTrade v2.11.11 — Investment Crash + Invisible Banner Slider
+
+Included:
+1. Investment-plan crash fix
+   - Adds the missing money() formatter.
+   - Protects the admin investment notification so it cannot stop the Node server.
+
+2. Dashboard banner slider polish
+   - The banner still auto-slides normally.
+   - Swipe/rotation behavior remains active.
+   - The visible slider/dot bar is hidden completely.
+
+Files:
+- server/app.js
+- public/css/dashboard.css
+- package.json
+
+Patch only:
+- no .env
+- no database
+- no node_modules

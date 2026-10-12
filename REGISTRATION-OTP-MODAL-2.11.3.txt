@@ -1,0 +1,24 @@
+OPTITRADE 2.11.3 — REGISTRATION OTP FLOW
+
+Registration no longer waits for the email provider before showing verification.
+
+New flow:
+1. Customer completes registration.
+2. Server creates/updates the unverified account and generates the 6-digit OTP.
+3. Server responds immediately.
+4. A styled 6-digit Email Verification modal opens directly on the Register page.
+5. Email delivery runs separately, so a slow Resend/SMTP connection cannot freeze Create Account.
+6. Customer enters the code in the popup and continues directly to Dashboard.
+7. Resend Code is available inside the popup.
+
+Additional reliability:
+- Resend API has a 12-second timeout.
+- SMTP has connection/greeting/socket timeouts.
+- Re-submitting an unverified account opens verification instead of treating its own username as a duplicate.
+- OTP resend cooldown still applies.
+- Existing /verify.html remains available as a fallback.
+
+SECURITY:
+OTP is not exposed to the browser. It is still delivered by the configured email transport (or development/test workflow where explicitly enabled).
+
+No database reset required.

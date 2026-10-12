@@ -1,0 +1,10 @@
+OptiTrade v2.11.6 — Human Verification Removed
+
+Changes:
+- Removed the arithmetic human-verification question from registration.
+- Removed server-side human-challenge validation from /api/auth/register.
+- Registration now proceeds from password/PIN/Terms directly to email OTP verification.
+- Kept existing rate limiting and email OTP verification.
+- Updated registration cache version to 2.11.6.
+
+This patch does NOT include .env, database files, or node_modules.

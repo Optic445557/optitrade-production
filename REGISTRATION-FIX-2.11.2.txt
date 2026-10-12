@@ -1,0 +1,25 @@
+OPTITRADE 2.11.2 — REGISTRATION FLOW FIX
+
+Fixed the case where Create Account appeared to do nothing / stayed on Register.
+
+What was happening:
+- The account could already be created successfully.
+- If the registration OTP email failed to send, the API returned an error.
+- The customer remained on Register even though the account existed.
+- A second attempt could then say the same username was already taken because the unfinished account owned it.
+
+Fixes:
+1. A successfully-created account now moves to Email Verification even if OTP delivery has a temporary problem.
+2. The Verify page displays the email-delivery warning and lets the customer use Resend Code.
+3. Re-submitting the same unverified email + username no longer treats that account's own username as a duplicate.
+4. Registration API responses now explicitly identify verification-pending state.
+5. Register safely handles unexpected/non-JSON tunnel/server responses and shows a useful connection message.
+6. Create Account shows a Creating account… state while the request is running.
+7. Existing verified email gets a direct Log in instead message.
+
+IMPORTANT:
+If the Verify page says the email could not be sent, the registration itself succeeded.
+The remaining issue is Email Delivery configuration/provider connectivity, not account creation.
+
+No database reset required.
+Existing unverified customers remain usable and can request a new verification code.

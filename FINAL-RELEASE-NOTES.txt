@@ -1,0 +1,47 @@
+OPTITRADE FINAL CONSOLIDATED RELEASE — 2.8.0
+
+BASE
+This release was consolidated from the full OptiTrade project ZIP supplied from the currently running local project, not from an older stage package.
+
+MAJOR FINAL FIXES
+- Fixed section-balance initialization so existing wallet balances are not overwritten by legacy balance rows.
+- Reworked customer deposits to be USD-first: customer enters desired USD account credit; system calculates crypto to send.
+- Added requested_usd / input-mode / credit-correction deposit audit fields.
+- Added Super Admin Deposit Credit Correction with delta-based wallet correction and audit history.
+- Added reversible modern balance adjustments with explicit reversal records.
+- Dashboard now separates Account Value, Total Deposited and Liquid Crypto Value.
+- Account Value counts Wallet / Trading / Investment / Portfolio holdings once instead of presenting section moves as new money.
+- Total Deposited comes from actual approved deposit credit amounts.
+- Portfolio pages now use section-aware holdings.
+- Removed fake market-change percentages and fake sparkline movement from customer market cards.
+- Removed old single-balance Admin Users/User pages and their legacy balance-adjustment API.
+- Removed dead MT5 runtime/setup files and stale MT5-only styling.
+- Removed hard-coded fake dashboard notification badge; real notification count is supplied by the notifications API.
+- Updated Windows starter for Node.js 24.x.
+- Cleaned historical root documentation into one README, deployment checklist and this release note.
+
+HISTORICAL BALANCE RECONCILIATION
+The application does not automatically rewrite existing customer history because it cannot safely know the intended value of a prior manual entry.
+
+Use the new Admin controls to correct only entries you have verified:
+1. Deposit Review -> Correct Credited USD
+2. User -> Transactions -> Reverse for an erroneous reversible manual balance adjustment
+
+Both actions preserve audit history.
+
+DATABASE
+No reset required. Migrations are non-destructive.
+
+KEEP WHEN UPDATING AN EXISTING LOCAL INSTALLATION
+- .env
+- database/
+- node_modules/
+
+TEST COMMANDS
+npm run cleanup-legacy
+npm run audit
+npm run smoke-test
+npm start
+
+NODE
+24.x

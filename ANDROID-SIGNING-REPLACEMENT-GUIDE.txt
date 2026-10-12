@@ -1,0 +1,35 @@
+OptiTrade Android Signing Replacement
+=====================================
+
+A NEW permanent Android release key has been generated.
+The previous exposed key must not be used for future public releases.
+
+SAFE FILES IN THIS GITHUB PATCH:
+- .gitignore
+- .github/workflows/build-android-release-apk.yml
+- public/.well-known/assetlinks.json
+- this guide
+
+PRIVATE FILES ARE IN A SEPARATE ZIP AND MUST NEVER BE UPLOADED TO GITHUB.
+
+GitHub repository setup:
+1. Upload/extract the SAFE GitHub patch over the repository.
+2. In GitHub: Settings -> Secrets and variables -> Actions -> New repository secret.
+3. Add these three secrets using the values from the PRIVATE backup:
+   OPTITRADE_ANDROID_KEYSTORE_B64
+   OPTITRADE_ANDROID_STORE_PASSWORD
+   OPTITRADE_ANDROID_KEY_PASSWORD
+4. Commit/deploy the safe patch so Render serves the NEW assetlinks.json.
+5. Confirm this URL opens:
+   https://optiprotrade.online/.well-known/assetlinks.json
+6. GitHub -> Actions -> Build OptiTrade Signed Release APK -> Run workflow.
+7. Download the OptiTrade-signed-release-apk artifact.
+8. Rename/copy OptiTrade.apk to public/downloads/OptiTrade.apk for the public website download.
+
+IMPORTANT:
+- Never add the .jks or private credentials file to the repository.
+- Keep the new private backup somewhere safe. Future Android updates must use this same key.
+- If this key is lost, normal APK updates signed with a different key cannot replace the installed app.
+
+New signing certificate SHA-256 fingerprint:
+D5:C1:B6:54:2F:86:7C:6F:CE:3C:B5:04:50:09:11:29:00:81:42:C3:15:B0:D1:8F:28:0F:49:90:0C:1F:D4:F5

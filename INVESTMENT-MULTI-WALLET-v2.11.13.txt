@@ -1,0 +1,24 @@
+OptiTrade v2.11.13 — Investment Multi-Wallet Funding
+
+Restored the flexible funding flow:
+- Funding Wallet is a dropdown.
+- It shows the user's supported wallet balances:
+  • Available Balance (USD)
+  • USDT Wallet
+  • Bitcoin Wallet
+  • Ethereum Wallet
+- Each dropdown option shows the current available balance.
+- Selecting a wallet immediately synchronizes the Available label.
+- MAX fills the input with the exact available balance for the selected wallet.
+- Users can also enter any smaller amount manually.
+- The request is submitted using the selected asset, not hard-coded USD.
+- After a successful request, the selected wallet's visible available balance is updated immediately.
+- The investment amount moves from that selected wallet into Investment Reserve.
+- Cancel/reject returns the same asset to the wallet.
+
+Server support from v2.11.12 already accepts USD, USDT, BTC and ETH investment funding and uses the selected wallet balance.
+
+Patch-only:
+- no .env
+- no database/
+- no node_modules/

@@ -1,0 +1,27 @@
+OPTITRADE 2.9.0 — URGENT ADMIN ATTENTION
+
+Adds a live Attention Center and blinking Admin notification bell for:
+- pending deposits
+- pending/on-hold withdrawals
+- pending Self-Directed trades
+- pending Trade with OptiTrade requests
+
+Clicking an urgent item opens the exact request and its action modal.
+
+Telegram:
+When Telegram is enabled for an admin, deposit/withdrawal/trade alerts are treated as urgent and are escalated to Super Admin.
+If APP_BASE_URL is set, Telegram includes a direct action URL.
+
+The Attention Center is based on actual workflow status, so pending work cannot disappear just because a notification was marked read.
+
+No database reset required.
+
+Keep:
+  .env
+  database/
+  node_modules/
+
+Then run:
+  npm run audit
+  npm run smoke-test
+  npm start

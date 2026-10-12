@@ -1,0 +1,25 @@
+OptiTrade v2.11.12 — Investment Plans Use Available Balance
+
+Investment funding flow:
+- Investment plans now use Available Balance (USD) directly.
+- Submitting a plan immediately moves the requested amount from Wallet/Available Balance to Investment Reserve.
+- The reduced Available Balance is returned by the API immediately.
+- The Investment Plans page now shows:
+  • Available to invest
+  • Reserved in investments
+- Cancelling or rejecting a pending request releases the reserved amount back to Available Balance.
+- USD investment settlement returns principal + result directly to Available Balance without requiring an external crypto price.
+
+Admin notification:
+- Assigned admin is notified when a customer submits an investment plan.
+- If no Sub-Admin owns the customer, the Super Admin is used automatically.
+- The missing money() formatter crash is fixed and the admin-notification call is protected.
+
+Also preserved:
+- Deposit response-first/no-hang server behavior from v2.11.9.
+- Invisible dashboard banner slider/dot control while auto-slide remains active.
+
+Patch only:
+- Does not include .env
+- Does not include database/
+- Does not include node_modules/

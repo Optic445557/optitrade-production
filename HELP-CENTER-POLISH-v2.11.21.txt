@@ -1,0 +1,22 @@
+OptiTrade v2.11.21 — Help Center Polish
+
+Fixes the mobile Help Center shown in the current production screenshot.
+
+Changes:
+- Removes the second duplicated "Welcome to OptiTrade Support" block.
+- Keeps the original welcome chat message only once.
+- Places Quick Questions directly under the single welcome message.
+- Shows exactly 3 quick questions by default.
+- Gives quick questions a clearly distinguished OptiTrade blue card design.
+- Adds a question/reopen icon, title, subtitle, and arrow to each quick question.
+- Keeps all remaining questions inside See more questions.
+- Improves the See more dropdown styling.
+- Styles Complete Profile / Explore Markets / Start Trading as proper OptiTrade action buttons instead of ordinary links.
+- Keeps reusable quick answers and automatic answers intact.
+
+Patch only:
+- public/js/account-support.js
+- public/css/pages.css
+- package.json
+
+No .env, database, server secrets, or node_modules are included.
