@@ -1,0 +1,79 @@
+OptiTrade v2.12.4 — ALL RECENT FIXES COMBINED
+
+This single patch combines the latest OptiTrade changes so you do not need to
+apply the recent patches separately.
+
+INCLUDED
+
+1) Android away-timeout lock
+- Locks the installed Android app after 5 minutes in the background.
+- Requires fingerprint, face unlock, PIN/pattern/password to return.
+- Hides the dashboard while locked.
+- Falls back to login if secure device unlock is unavailable.
+
+2) Telegram admin alerts
+- Existing per-admin Telegram configuration remains supported.
+- Render environment fallback:
+    TELEGRAM_BOT_TOKEN
+    TELEGRAM_CHAT_ID
+- Test endpoint works with either admin-saved settings or Render environment values.
+- Safe Render logs:
+    [TELEGRAM SENT]
+    [TELEGRAM FAILED]
+    [TELEGRAM SKIP]
+    [TELEGRAM TEST SENT]
+- Registration, deposit, withdrawal, trade, support and referral-click alerts supported.
+
+3) Immediate admin support alerts
+- User support messages increment unread_admin immediately.
+- Support is treated as an urgent admin event.
+- Telegram support alert is sent immediately.
+- Admin Attention Bell includes unread support messages.
+- Admin does not need to open Support Inbox first.
+- Support messages appear with Reply action in Attention Center.
+
+4) Website Android download mini-bar
+- Small bottom banner on homepage and main customer pages.
+- Download App button points to /downloads/OptiTrade.apk
+- X dismisses it for 7 days in that browser.
+- Hidden automatically inside the installed OptiTrade Android app.
+- If APK is missing/0 bytes, it redirects to /download-app.html instead of a broken file.
+
+5) Android GitHub Actions workflow fix
+- Correct Android SDK setup.
+- Test and signed release workflows both included.
+
+6) Android Kotlin duplicate-class fix
+- Aligns Kotlin runtime dependencies to avoid duplicate-class build failure.
+
+FILES INCLUDED
+- server/app.js
+- admin/admin-common.js
+- android-app/app/src/main/java/online/optiprotrade/app/MainActivity.java
+- android-app/app/build.gradle
+- .github/workflows/build-android-test-apk.yml
+- .github/workflows/build-android-release-apk.yml
+- public/css/app-download-banner.css
+- public/js/app-download-banner.js
+- updated public HTML pages for the mini-bar
+- package.json
+- supporting notes
+
+NOT INCLUDED
+- .env
+- database files
+- node_modules
+- Android signing keys / .jks
+- Telegram bot token
+- API keys
+- passwords
+- private credentials
+
+DEPLOYMENT
+1. Extract over your current OptiTrade project.
+2. Upload the changed files/folders to GitHub.
+3. Let Render redeploy.
+4. Because MainActivity.java changed, run:
+   Build OptiTrade Signed Release APK
+5. Download the signed artifact, extract OptiTrade.apk, and publish it at:
+   public/downloads/OptiTrade.apk

@@ -651,21 +651,64 @@ async function telegramBotRequest(token,method,payload){
  if(!r.ok||!d.ok)throw new Error(d.description||`Telegram request failed (${r.status})`);
  return d.result;
 }
-function urgentAdminEvent(event){return ['deposit','withdrawal','trade'].includes(String(event||''))}
+function urgentAdminEvent(event){return ['deposit','withdrawal','trade','support'].includes(String(event||''))}
+function telegramEnvConfig(){
+ const token=String(process.env.TELEGRAM_BOT_TOKEN||'').trim();
+ const chatId=String(process.env.TELEGRAM_CHAT_ID||'').trim();
+ return {token,chatId,configured:!!(token&&chatId)};
+}
+function telegramConfigForAdmin(adminId){
+ const row=db.prepare('SELECT * FROM telegram_admin_settings WHERE admin_id=? AND enabled=1').get(adminId);
+ if(row){
+   try{
+     return {
+       source:'admin',
+       token:decryptTelegramToken(row.bot_token_enc),
+       chatId:String(row.chat_id||'').trim(),
+       events:telegramEvents(row.events),
+       enabled:!!row.enabled
+     };
+   }catch(e){
+     console.error(`[TELEGRAM CONFIG] admin=${adminId} decrypt_failed=${e.message}`);
+   }
+ }
+ const env=telegramEnvConfig();
+ if(env.configured){
+   return {
+     source:'env',
+     token:env.token,
+     chatId:env.chatId,
+     events:['registration','deposit','withdrawal','trade','support','referral_click'],
+     enabled:true
+   };
+ }
+ return null;
+}
 async function sendTelegramAdminAlert(adminId,event,title,body,href=null){
- const s=db.prepare('SELECT * FROM telegram_admin_settings WHERE admin_id=? AND enabled=1').get(adminId);
- if(!s)return {skipped:true};
- const urgent=urgentAdminEvent(event),events=telegramEvents(s.events);
- if(!urgent&&!events.includes(event))return {skipped:true};
- const token=decryptTelegramToken(s.bot_token_enc);
+ const cfg=telegramConfigForAdmin(adminId);
+ if(!cfg){
+   console.warn(`[TELEGRAM SKIP] admin=${adminId||'none'} event=${event} reason=not_configured`);
+   return {skipped:true,reason:'not_configured'};
+ }
+ const urgent=urgentAdminEvent(event),events=Array.isArray(cfg.events)?cfg.events:[];
+ if(!urgent&&!events.includes(event)){
+   console.log(`[TELEGRAM SKIP] admin=${adminId||'none'} event=${event} source=${cfg.source} reason=event_disabled`);
+   return {skipped:true,reason:'event_disabled'};
+ }
  let action='';
  try{
   const base=productionBaseUrl();
   if(base&&href)action=`\n\nTake action: ${base}${String(href).startsWith('/')?'':'/'}${String(href)}`;
  }catch{}
  const text=`🚨 OptiTrade — ${title}\n\n${body}${action}\n\n${new Date().toISOString().replace('T',' ').replace(/\.\d{3}Z$/,' UTC')}`;
- const message=await telegramBotRequest(token,'sendMessage',{chat_id:s.chat_id,text});
- return {ok:true,messageId:message?.message_id||null};
+ try{
+   const message=await telegramBotRequest(cfg.token,'sendMessage',{chat_id:cfg.chatId,text});
+   console.log(`[TELEGRAM SENT] admin=${adminId||'none'} event=${event} source=${cfg.source} chat=${String(cfg.chatId).slice(0,5)}*** message=${message?.message_id||'unknown'}`);
+   return {ok:true,messageId:message?.message_id||null,source:cfg.source};
+ }catch(e){
+   console.error(`[TELEGRAM FAILED] admin=${adminId||'none'} event=${event} source=${cfg.source} error=${e.message}`);
+   throw e;
+ }
 }
 function notifyAdminEvent(adminId,event,title,body,href=null){
  if(!adminId)return;
@@ -3060,20 +3103,24 @@ app.post('/api/support/message',auth,(req,res)=>{
   const info=db.prepare("INSERT INTO support_messages(thread_id,sender_role,sender_id,body) VALUES(?,'user',?,?)").run(t.id,req.user.id,body);
   db.prepare("UPDATE support_threads SET unread_admin=unread_admin+1,status='open',updated_at=CURRENT_TIMESTAMP WHERE id=?").run(t.id);
   const supportAdmin=walletOwnerForUser(req.user);
-  if(supportAdmin)notifyAdminEvent(supportAdmin,'support','New customer help message',`${req.user.name||req.user.username||'Customer'}: ${body.slice(0,220)}`,'/admin/support.html?thread='+t.id);
+  notifyUrgentAdminEvent(supportAdmin,'support','New customer support message',`${req.user.name||req.user.username||req.user.email||'Customer'}: ${body.slice(0,220)}`,'/admin/support.html?thread='+t.id);
+  console.log(`[SUPPORT ALERT] user=${req.user.id} thread=${t.id} owner=${supportAdmin||'global'} unread_admin=incremented`);
   res.json({ok:true,id:info.lastInsertRowid});
 });
 // Scoped admin support routes are defined later with ownership checks.
 
 app.get('/api/admin/telegram-settings',admin,(req,res)=>{
  const s=db.prepare('SELECT chat_id,bot_username,enabled,events,updated_at FROM telegram_admin_settings WHERE admin_id=?').get(req.user.id);
+ const env=telegramEnvConfig();
  res.json({
-   configured:!!s,
-   chatId:s?.chat_id||'',
+   configured:!!s||env.configured,
+   source:s?'admin':(env.configured?'env':null),
+   chatId:s?.chat_id||(env.configured?env.chatId:''),
    botUsername:s?.bot_username||null,
-   enabled:s?!!s.enabled:false,
+   enabled:s?!!s.enabled:env.configured,
    events:s?telegramEvents(s.events):['registration','deposit','withdrawal','trade','support','referral_click'],
-   updatedAt:s?.updated_at||null
+   updatedAt:s?.updated_at||null,
+   environmentFallback:env.configured
  });
 });
 app.put('/api/admin/telegram-settings',admin,async(req,res)=>{
@@ -3102,13 +3149,16 @@ app.put('/api/admin/telegram-settings',admin,async(req,res)=>{
  res.json({ok:true,configured:true,botUsername,chatId,enabled,events});
 });
 app.post('/api/admin/telegram-settings/test',admin,async(req,res)=>{
- const s=db.prepare('SELECT * FROM telegram_admin_settings WHERE admin_id=?').get(req.user.id);
- if(!s)return res.status(400).json({error:'Save Telegram settings first.'});
+ const cfg=telegramConfigForAdmin(req.user.id);
+ if(!cfg)return res.status(400).json({error:'Telegram is not configured. Save the bot token/chat ID in Admin Telegram Alerts, or set TELEGRAM_BOT_TOKEN and TELEGRAM_CHAT_ID in Render.'});
  try{
-   const token=decryptTelegramToken(s.bot_token_enc);
-   await telegramBotRequest(token,'sendMessage',{chat_id:s.chat_id,text:`✅ OptiTrade Telegram alerts are connected.\n\nAdmin: ${req.user.name||req.user.username||req.user.email}\nTime: ${new Date().toISOString()}`});
-   res.json({ok:true});
- }catch(e){res.status(400).json({error:'Telegram test failed: '+e.message})}
+   const message=await telegramBotRequest(cfg.token,'sendMessage',{chat_id:cfg.chatId,text:`✅ OptiTrade Telegram alerts are connected.\n\nAdmin: ${req.user.name||req.user.username||req.user.email}\nSource: ${cfg.source}\nTime: ${new Date().toISOString()}`});
+   console.log(`[TELEGRAM TEST SENT] admin=${req.user.id} source=${cfg.source} message=${message?.message_id||'unknown'}`);
+   res.json({ok:true,source:cfg.source,messageId:message?.message_id||null});
+ }catch(e){
+   console.error(`[TELEGRAM TEST FAILED] admin=${req.user.id} source=${cfg.source} error=${e.message}`);
+   res.status(400).json({error:'Telegram test failed: '+e.message});
+ }
 });
 app.delete('/api/admin/telegram-settings',admin,(req,res)=>{
  db.prepare('DELETE FROM telegram_admin_settings WHERE admin_id=?').run(req.user.id);
@@ -3894,6 +3944,15 @@ app.get('/api/admin/attention',admin,(req,res)=>{
  const self=broad
   ?db.prepare(`SELECT p.id,p.reference,p.notional_usd,p.pair,p.side,p.created_at,u.name,u.username,u.email FROM paper_trade_orders p JOIN users u ON u.id=p.user_id WHERE p.status='pending' ORDER BY p.id DESC LIMIT 80`).all()
   :db.prepare(`SELECT p.id,p.reference,p.notional_usd,p.pair,p.side,p.created_at,u.name,u.username,u.email FROM paper_trade_orders p JOIN users u ON u.id=p.user_id WHERE p.status='pending' AND u.owner_admin_id=? ORDER BY p.id DESC LIMIT 80`).all(aid);
+ const support=broad
+  ?db.prepare(`SELECT t.id,t.user_id,t.unread_admin,t.updated_at,u.name,u.username,u.email,
+      (SELECT body FROM support_messages m WHERE m.thread_id=t.id ORDER BY m.id DESC LIMIT 1) last_message
+    FROM support_threads t JOIN users u ON u.id=t.user_id
+    WHERE t.unread_admin>0 ORDER BY t.updated_at DESC LIMIT 80`).all()
+  :db.prepare(`SELECT t.id,t.user_id,t.unread_admin,t.updated_at,u.name,u.username,u.email,
+      (SELECT body FROM support_messages m WHERE m.thread_id=t.id ORDER BY m.id DESC LIMIT 1) last_message
+    FROM support_threads t JOIN users u ON u.id=t.user_id
+    WHERE t.unread_admin>0 AND u.owner_admin_id=? ORDER BY t.updated_at DESC LIMIT 80`).all(aid);
  const items=[];
  for(const x of deposits){
   const requested=Number(x.requested_usd??x.usd_value??0);
@@ -3907,9 +3966,11 @@ app.get('/api/admin/attention',admin,(req,res)=>{
   detail:`$${Number(x.amount).toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2})} • ${x.market_preference||'Managed market'}`,href:`/admin/managed-trades.html?kind=managed&focus=${x.id}&action=review`,createdAt:x.created_at});
  for(const x of self)items.push({kind:'trade',tradeKind:'self',id:x.id,reference:x.reference,status:'pending',title:'Self-Directed trade request',customer:x.name||x.username||x.email,
   detail:`${String(x.side||'').toUpperCase()} ${x.pair} • $${Number(x.notional_usd).toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2})}`,href:`/admin/managed-trades.html?kind=self&focus=${x.id}&action=review`,createdAt:x.created_at});
+ for(const x of support)items.push({kind:'support',id:x.id,status:'unread',title:x.unread_admin>1?`${x.unread_admin} unread support messages`:'New support message',customer:x.name||x.username||x.email,
+  detail:String(x.last_message||'Customer sent a support message').slice(0,180),href:`/admin/support.html?thread=${x.id}`,createdAt:x.updated_at});
  items.sort((a,b)=>String(b.createdAt||'').localeCompare(String(a.createdAt||'')));
- const counts={deposits:deposits.length,withdrawals:withdrawals.length,trades:managed.length+self.length};
- counts.total=counts.deposits+counts.withdrawals+counts.trades;
+ const counts={deposits:deposits.length,withdrawals:withdrawals.length,trades:managed.length+self.length,support:support.reduce((n,x)=>n+Number(x.unread_admin||0),0)};
+ counts.total=counts.deposits+counts.withdrawals+counts.trades+counts.support;
  res.set('Cache-Control','no-store');res.json({counts,items:items.slice(0,120)});
 });
 

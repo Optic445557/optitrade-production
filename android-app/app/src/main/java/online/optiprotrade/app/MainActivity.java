@@ -47,8 +47,11 @@ public class MainActivity extends AppCompatActivity {
     private static final String BASE="https://optiprotrade.online";
     private static final String HOME=BASE+"/";
     private static final String HOST="optiprotrade.online";
+    private static final long AWAY_LOCK_MS=5L*60L*1000L; // 5 minutes
+    private static final String PREF_BACKGROUND_AT="background_at";
     private WebView webView; private ProgressBar progress; private View offlinePanel; private ValueCallback<Uri[]> fileCallback;
     private SecureTokenStore tokenStore; private SharedPreferences prefs; private boolean dashboardSeen=false; private boolean enrollmentPromptShown=false;
+    private boolean appLockPromptActive=false;
 
     private final ActivityResultLauncher<Intent> filePicker=registerForActivityResult(new ActivityResultContracts.StartActivityForResult(),result->{Uri[] out=null;if(result.getResultCode()==RESULT_OK&&result.getData()!=null&&result.getData().getData()!=null)out=new Uri[]{result.getData().getData()};if(fileCallback!=null){fileCallback.onReceiveValue(out);fileCallback=null;}});
 
@@ -64,6 +67,43 @@ public class MainActivity extends AppCompatActivity {
     private void startEntry(){
         if(tokenStore.hasToken() && biometricAvailable()) promptBiometricAndTrustedLogin();
         else loadInitialUrl();
+    }
+
+    private void lockAfterAwayIfNeeded(){
+        if(appLockPromptActive)return;
+        long backgroundAt=prefs.getLong(PREF_BACKGROUND_AT,0L);
+        if(backgroundAt<=0L)return;
+        long elapsed=Math.max(0L,System.currentTimeMillis()-backgroundAt);
+        if(elapsed<AWAY_LOCK_MS)return;
+
+        webView.setVisibility(View.INVISIBLE);
+        progress.setVisibility(View.GONE);
+
+        if(!biometricAvailable()){
+            prefs.edit().remove(PREF_BACKGROUND_AT).apply();
+            CookieManager.getInstance().removeSessionCookies(null);
+            CookieManager.getInstance().flush();
+            webView.setVisibility(View.VISIBLE);
+            webView.loadUrl(BASE+"/login.html");
+            return;
+        }
+
+        appLockPromptActive=true;
+        Executor ex=ContextCompat.getMainExecutor(this);
+        BiometricPrompt bp=new BiometricPrompt(this,ex,new BiometricPrompt.AuthenticationCallback(){
+            @Override public void onAuthenticationSucceeded(BiometricPrompt.AuthenticationResult r){
+                super.onAuthenticationSucceeded(r);
+                appLockPromptActive=false;
+                prefs.edit().remove(PREF_BACKGROUND_AT).apply();
+                webView.setVisibility(View.VISIBLE);
+            }
+            @Override public void onAuthenticationError(int code,CharSequence msg){
+                super.onAuthenticationError(code,msg);
+                appLockPromptActive=false;
+                moveTaskToBack(true);
+            }
+        });
+        bp.authenticate(phoneSecurityPrompt("Unlock OptiTrade","You were away for a while. Confirm with your fingerprint, face or phone screen lock."));
     }
     private boolean biometricAvailable(){
         BiometricManager bm=BiometricManager.from(this);
@@ -119,6 +159,20 @@ public class MainActivity extends AppCompatActivity {
     private void writeJson(HttpURLConnection c,JSONObject body)throws Exception{c.setDoOutput(true);try(OutputStream os=c.getOutputStream()){os.write(body.toString().getBytes(StandardCharsets.UTF_8));}}
     private String read(HttpURLConnection c,boolean success)throws Exception{InputStream in=success?c.getInputStream():c.getErrorStream();if(in==null)return "";StringBuilder b=new StringBuilder();try(BufferedReader r=new BufferedReader(new InputStreamReader(in,StandardCharsets.UTF_8))){String line;while((line=r.readLine())!=null)b.append(line);}return b.toString();}
     private void captureCookies(HttpURLConnection c){Map<String,List<String>> h=c.getHeaderFields();for(Map.Entry<String,List<String>> e:h.entrySet()){if(e.getKey()!=null&&"Set-Cookie".equalsIgnoreCase(e.getKey()))for(String cookie:e.getValue())CookieManager.getInstance().setCookie(BASE,cookie);}CookieManager.getInstance().flush();}
+    @Override protected void onStop(){
+        super.onStop();
+        if(!isChangingConfigurations()){
+            prefs.edit().putLong(PREF_BACKGROUND_AT,System.currentTimeMillis()).apply();
+        }
+    }
+
+    @Override protected void onStart(){
+        super.onStart();
+        if(prefs!=null && webView!=null){
+            lockAfterAwayIfNeeded();
+        }
+    }
+
     @Override protected void onSaveInstanceState(Bundle out){webView.saveState(out);super.onSaveInstanceState(out);}
     @Override public void onBackPressed(){if(webView.canGoBack())webView.goBack();else super.onBackPressed();}
 }

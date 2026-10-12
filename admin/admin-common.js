@@ -24,8 +24,8 @@ async function refreshAdminAttention(){
  try{
   const r=await fetch('/api/admin/attention',{cache:'no-store'});if(r.status===401||r.status===403||!r.ok)return;const d=await r.json(),total=Number(d.counts?.total||0);
   const badge=document.getElementById('adminAttentionBadge'),nav=document.getElementById('navAttentionCount');badge.textContent=total;badge.hidden=!total;bell.classList.toggle('has-urgent',total>0);if(nav){nav.textContent=total;nav.hidden=!total}
-  const summary=document.getElementById('adminAttentionSummary');if(summary)summary.textContent=total?`${d.counts.deposits} deposit • ${d.counts.withdrawals} withdrawal • ${d.counts.trades} trade`:'Nothing pending right now';
-  const box=document.getElementById('adminAttentionItems');if(box)box.innerHTML=total?(d.items||[]).slice(0,8).map(x=>`<a class="admin-attention-item ${esc(x.kind)}" href="${esc(x.href)}"><span class="admin-attention-type">${x.kind==='deposit'?'↓':x.kind==='withdrawal'?'↑':'↗'}</span><span><b>${esc(x.title)}</b><small>${esc(x.customer)} • ${esc(x.detail)}</small></span><em>Review</em></a>`).join(''):'<div class="admin-attention-empty">✓ No pending deposit, withdrawal or trade request.</div>';
+  const summary=document.getElementById('adminAttentionSummary');if(summary)summary.textContent=total?`${d.counts.deposits} deposit • ${d.counts.withdrawals} withdrawal • ${d.counts.trades} trade • ${d.counts.support||0} support`:'Nothing pending right now';
+  const box=document.getElementById('adminAttentionItems');if(box)box.innerHTML=total?(d.items||[]).slice(0,8).map(x=>`<a class="admin-attention-item ${esc(x.kind)}" href="${esc(x.href)}"><span class="admin-attention-type">${x.kind==='deposit'?'↓':x.kind==='withdrawal'?'↑':x.kind==='support'?'✉':'↗'}</span><span><b>${esc(x.title)}</b><small>${esc(x.customer)} • ${esc(x.detail)}</small></span><em>${x.kind==='support'?'Reply':'Review'}</em></a>`).join(''):'<div class="admin-attention-empty">✓ No pending deposit, withdrawal, trade or support request.</div>';
  }catch{}
 }
 function ensureLogout(){
