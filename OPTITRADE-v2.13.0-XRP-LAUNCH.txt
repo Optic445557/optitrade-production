@@ -1,0 +1,7 @@
+OptiTrade v2.13.0 — XRP Launch
+
+Adds XRP/USD market visibility, XRP balances, portfolio switching, internal transfer, withdrawals, XRPL deposit-wallet setup with optional destination tag, XRP homepage ticker/terminal, and an XRP promotional homepage section.
+
+XRP deposits still use the existing manual/admin review workflow; this release does not claim automatic XRPL on-chain verification.
+
+No .env, database, private keys, signing keys, API secrets, or node_modules are included.

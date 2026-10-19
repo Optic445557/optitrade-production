@@ -1,10 +1,10 @@
 const $=s=>document.querySelector(s), money=n=>'$'+Number(n||0).toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2});
-let userData, withdrawalData=null, prices={BTC:0,ETH:0,USDT:1};
-const marketDefs=[['BTC','BTC/USDT','₿'],['ETH','ETH/USDT','◆'],['EUR','EUR/USD','€'],['GBP','GBP/USD','£'],['JPY','USD/JPY','¥'],['USDT','USDT/USD','₮']];
+let userData, withdrawalData=null, prices={BTC:0,ETH:0,XRP:0,USDT:1};
+const marketDefs=[['BTC','BTC/USDT','₿'],['ETH','ETH/USDT','◆'],['XRP','XRP/USD','✕'],['EUR','EUR/USD','€'],['GBP','GBP/USD','£'],['JPY','USD/JPY','¥'],['USDT','USDT/USD','₮']];
 function initials(name='User'){return name.split(/\s+/).slice(0,2).map(x=>x[0]).join('').toUpperCase()}
-function renderMarkets(fx={}){const vals={BTC:prices.BTC,ETH:prices.ETH,USDT:1,EUR:fx.EUR||0,GBP:fx.GBP||0,JPY:fx.JPY||0};$('#marketGrid').innerHTML=marketDefs.map(d=>{let v=vals[d[0]],display=d[0]==='JPY'?Number(v).toFixed(3):(d[0]==='BTC'||d[0]==='ETH'?money(v):Number(v).toFixed(5));return `<article class="market-card"><div class="market-top"><div class="coin"><span class="coin-icon">${d[2]}</span>${d[1]}</div><span class="change">REFERENCE</span></div><div class="price">${v?display:'—'}</div><small class="market-card-source">Reference market value</small></article>`}).join('')}
+function renderMarkets(fx={}){const vals={BTC:prices.BTC,ETH:prices.ETH,XRP:prices.XRP,USDT:1,EUR:fx.EUR||0,GBP:fx.GBP||0,JPY:fx.JPY||0};$('#marketGrid').innerHTML=marketDefs.map(d=>{let v=vals[d[0]],display=d[0]==='JPY'?Number(v).toFixed(3):(['BTC','ETH','XRP'].includes(d[0])?money(v):Number(v).toFixed(5));return `<article class="market-card"><div class="market-top"><div class="coin"><span class="coin-icon">${d[2]}</span>${d[1]}</div><span class="change">REFERENCE</span></div><div class="price">${v?display:'—'}</div><small class="market-card-source">Reference market value</small></article>`}).join('')}
 function sectionAssetMap(section){
- const out={USD:0,USDT:0,BTC:0,ETH:0};
+ const out={USD:0,USDT:0,BTC:0,ETH:0,XRP:0};
  for(const x of userData?.sectionBalances||[])if(x.section===section&&Object.prototype.hasOwnProperty.call(out,x.asset))out[x.asset]=Number(x.amount||0);
  if(section==='wallet'&&!(userData?.sectionBalances||[]).some(x=>x.section==='wallet')){
    for(const x of userData?.balances||[])if(Object.prototype.hasOwnProperty.call(out,x.asset))out[x.asset]=Number(x.amount||0);
@@ -12,24 +12,24 @@ function sectionAssetMap(section){
  return out;
 }
 function withdrawalReservedMap(){
- const out={USD:0,USDT:0,BTC:0,ETH:0};
+ const out={USD:0,USDT:0,BTC:0,ETH:0,XRP:0};
  for(const x of withdrawalData?.assets||[])if(Object.prototype.hasOwnProperty.call(out,x.asset))out[x.asset]=Number(x.reserved||0);
  return out;
 }
 function usdValueOf(balances){
- const p={USD:1,USDT:Number(prices.USDT||1),BTC:Number(prices.BTC||0),ETH:Number(prices.ETH||0)};
+ const p={USD:1,USDT:Number(prices.USDT||1),BTC:Number(prices.BTC||0),ETH:Number(prices.ETH||0),XRP:Number(prices.XRP||0)};
  return Object.keys(p).reduce((sum,a)=>sum+Number(balances[a]||0)*p[a],0);
 }
 function renderAccount(){
  const wallet=sectionAssetMap('wallet'),investment=sectionAssetMap('investment'),trading=sectionAssetMap('trading'),portfolio=sectionAssetMap('portfolio');
  const reserved=withdrawalReservedMap();
- const available={USD:0,USDT:0,BTC:0,ETH:0};
+ const available={USD:0,USDT:0,BTC:0,ETH:0,XRP:0};
  for(const asset of Object.keys(available))available[asset]=Math.max(0,Number(wallet[asset]||0)-Number(reserved[asset]||0));
- const totalByAsset={USD:0,USDT:0,BTC:0,ETH:0};
+ const totalByAsset={USD:0,USDT:0,BTC:0,ETH:0,XRP:0};
  for(const asset of Object.keys(totalByAsset))totalByAsset[asset]=Number(wallet[asset]||0)+Number(investment[asset]||0)+Number(trading[asset]||0)+Number(portfolio[asset]||0);
  const accountValue=usdValueOf(totalByAsset);
  const availableBalanceValue=usdValueOf(available);
- const availableCryptoValue=usdValueOf({USD:0,USDT:available.USDT,BTC:available.BTC,ETH:available.ETH});
+ const availableCryptoValue=usdValueOf({USD:0,USDT:available.USDT,BTC:available.BTC,ETH:available.ETH,XRP:available.XRP});
  const reservedValue=usdValueOf(reserved);
  const btcAmount=Number(totalByAsset.BTC||0),btcPrice=Number(prices.BTC||0);
  $('#portfolioValue').textContent=money(accountValue);
@@ -113,11 +113,13 @@ async function loadMarkets(){
     const d=await r.json(),m=d.markets||{};
     prices.BTC=Number(m.BTCUSD)||prices.BTC;
     prices.ETH=Number(m.ETHUSD)||prices.ETH;
+    prices.XRP=Number(m.XRPUSD)||prices.XRP;
     prices.USDT=1;
     fx={EUR:Number(m.EURUSD)||0,GBP:Number(m.GBPUSD)||0,JPY:Number(m.USDJPY)||0};
   }catch(e){}
   $('#tickBtc').textContent=prices.BTC?money(prices.BTC):'Unavailable';
   $('#tickEth').textContent=prices.ETH?money(prices.ETH):'Unavailable';
+  if($('#tickXrp'))$('#tickXrp').textContent=prices.XRP?money(prices.XRP):'Unavailable';
   $('#tickEur').textContent=fx.EUR?fx.EUR.toFixed(5):'—';
   $('#tickGbp').textContent=fx.GBP?fx.GBP.toFixed(5):'—';
   $('#tickJpy').textContent=fx.JPY?fx.JPY.toFixed(2):'—';

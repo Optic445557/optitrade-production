@@ -945,10 +945,10 @@ function scopedUserWhere(actor,alias='u'){
 }
 function seedSectionBalances(userId){
  const legacy=Object.fromEntries(db.prepare('SELECT asset,amount FROM balances WHERE user_id=?').all(userId).map(x=>[x.asset,Number(x.amount||0)]));
- for(const asset of ['USD','USDT','BTC','ETH'])
+ for(const asset of ['USD','USDT','BTC','ETH','XRP'])
    db.prepare('INSERT OR IGNORE INTO section_balances(user_id,section,asset,amount) VALUES(?,?,?,?)').run(userId,'wallet',asset,Number(legacy[asset]||0));
  for(const section of ['portfolio','trading','investment'])
-   for(const asset of ['USD','USDT','BTC','ETH'])
+   for(const asset of ['USD','USDT','BTC','ETH','XRP'])
      db.prepare('INSERT OR IGNORE INTO section_balances(user_id,section,asset,amount) VALUES(?,?,?,0)').run(userId,section,asset);
 }
 for(const u of db.prepare("SELECT id FROM users WHERE role='user'").all()) seedSectionBalances(u.id);
@@ -981,11 +981,14 @@ db.exec(`CREATE TABLE IF NOT EXISTS deposit_wallet_addresses(
  created_at TEXT DEFAULT CURRENT_TIMESTAMP,
  updated_at TEXT DEFAULT CURRENT_TIMESTAMP
 );`);
+const depositWalletAddressColumns=db.prepare('PRAGMA table_info(deposit_wallet_addresses)').all().map(c=>c.name);
+if(!depositWalletAddressColumns.includes('destination_tag')) db.exec('ALTER TABLE deposit_wallet_addresses ADD COLUMN destination_tag TEXT');
+
 try{
   db.prepare(`INSERT INTO deposit_wallet_addresses(admin_id,label,asset,network,address,active,updated_at)
     SELECT d.admin_id,'Imported wallet',d.asset,d.network,d.address,d.active,d.updated_at
     FROM deposit_wallets d
-    WHERE d.asset IN ('BTC','USDT','ETH')
+    WHERE d.asset IN ('BTC','USDT','ETH','XRP')
       AND NOT EXISTS(
         SELECT 1 FROM deposit_wallet_addresses v
         WHERE v.admin_id=d.admin_id AND v.asset=d.asset AND v.network=d.network AND v.address=d.address
@@ -1013,6 +1016,7 @@ if(!depositRequestColumns.includes('credit_corrected_at')) db.exec("ALTER TABLE 
 if(!depositRequestColumns.includes('credit_corrected_by')) db.exec("ALTER TABLE deposit_requests ADD COLUMN credit_corrected_by INTEGER");
 if(!depositRequestColumns.includes('credit_correction_reason')) db.exec("ALTER TABLE deposit_requests ADD COLUMN credit_correction_reason TEXT");
 if(!depositRequestColumns.includes('client_request_id')) db.exec("ALTER TABLE deposit_requests ADD COLUMN client_request_id TEXT");
+if(!depositRequestColumns.includes('destination_tag')) db.exec("ALTER TABLE deposit_requests ADD COLUMN destination_tag TEXT");
 try{db.exec("CREATE UNIQUE INDEX IF NOT EXISTS idx_deposit_client_request ON deposit_requests(user_id,client_request_id) WHERE client_request_id IS NOT NULL")}catch(e){console.warn('[DEPOSIT IDEMPOTENCY INDEX]',e.message)}
 
 db.exec(`CREATE TABLE IF NOT EXISTS deposit_credit_corrections(
@@ -1177,7 +1181,7 @@ if(adminEmail && adminPassword){
   }else{
     const info=db.prepare("INSERT INTO users(name,email,password_hash,email_verified,role) VALUES(?,?,?,?,?)")
       .run('OptiTrade Admin',adminEmail,passwordHash,1,'super_admin');
-    for(const asset of ['USD','BTC','ETH','USDT'])
+    for(const asset of ['USD','BTC','ETH','USDT','XRP'])
       db.prepare('INSERT OR IGNORE INTO balances(user_id,asset,amount) VALUES(?,?,0)').run(info.lastInsertRowid,asset);
     console.log(`[ADMIN] Created admin account: ${adminEmail}`);
   }
@@ -2589,7 +2593,7 @@ app.post('/api/auth/register',async(req,res)=>{
     }
     const info=db.prepare('INSERT INTO users(name,email,password_hash,username,phone,country,currency,dob,terms_accepted_at,owner_admin_id,pin_hash,pin_fail_count,pin_locked_until) VALUES(?,?,?,?,?,?,?,?,?,?,?,0,0)')
       .run(name,email,bcrypt.hashSync(password,12),username,phone,country,currency,dob||null,new Date().toISOString(),ownerAdminId,pinHash);
-    ['USD','BTC','ETH','USDT'].forEach(a=>db.prepare('INSERT INTO balances(user_id,asset,amount) VALUES(?,?,0)').run(info.lastInsertRowid,a));
+    ['USD','BTC','ETH','USDT','XRP'].forEach(a=>db.prepare('INSERT INTO balances(user_id,asset,amount) VALUES(?,?,0)').run(info.lastInsertRowid,a));
     seedSectionBalances(info.lastInsertRowid);
     const issued=issueRegistrationOtp(info.lastInsertRowid,{resend:false});
     try{
@@ -3798,7 +3802,7 @@ function withdrawalWalletAmount(userId,asset){
 app.get('/api/withdrawal/status',auth,(req,res)=>{
  if(req.user.role!=='user')return res.status(403).json({error:'Customer account required'});
  const control=withdrawalControlForUser(req.user);
- const assets=['USD','USDT','BTC','ETH'].map(asset=>{
+ const assets=['USD','USDT','BTC','ETH','XRP'].map(asset=>{
    const balance=withdrawalWalletAmount(req.user.id,asset);
    const reserved=withdrawalReserved(req.user.id,asset);
    return {asset,balance,reserved,available:Math.max(0,balance-reserved)};
@@ -3825,7 +3829,7 @@ app.post('/api/withdrawal/requests',auth,(req,res)=>{
  if(destinationIdentity===String(req.user.email||'').trim().toLowerCase()||destinationIdentity===String(req.user.username||'').trim().toLowerCase())
    return res.status(400).json({error:'Enter the actual external receiver address. Your OptiProTrade email or username cannot be used as the withdrawal destination.'});
  const pinCheck=sensitivePinCheck(req.user.id,String(req.body.pin||''));if(!pinCheck.ok)return res.status(pinCheck.status).json(pinCheck);
- if(!['USD','USDT','BTC','ETH'].includes(asset)||!Number.isFinite(amount)||amount<=0)
+ if(!['USD','USDT','BTC','ETH','XRP'].includes(asset)||!Number.isFinite(amount)||amount<=0)
    return res.status(400).json({error:'Choose a valid asset and withdrawal amount.'});
  if(destination.length<3)return res.status(400).json({error:'Enter the receiver address.'});
  const balance=withdrawalWalletAmount(req.user.id,asset);
@@ -4036,7 +4040,7 @@ app.get('/api/admin/users-v2/:id',admin,(req,res)=>{
    FROM deposit_requests WHERE user_id=? ORDER BY id DESC LIMIT 20`).all(u.id);
  const managedTrades=db.prepare(`SELECT id,reference,funding_asset,amount,market_preference,preferred_symbol,traded_symbol,status,pnl_percent,pnl_amount,return_amount,created_at,opened_at,settled_at
    FROM managed_trade_requests WHERE user_id=? ORDER BY id DESC LIMIT 20`).all(u.id);
- const walletAvailability=['USD','USDT','BTC','ETH'].map(asset=>{
+ const walletAvailability=['USD','USDT','BTC','ETH','XRP'].map(asset=>{
    const balance=Number(sectionBalances.find(x=>x.section==='wallet'&&x.asset===asset)?.amount||0);
    const reserved=withdrawals.filter(x=>x.asset===asset&&['pending','on_hold'].includes(x.status)).reduce((n,x)=>n+Number(x.amount||0),0);
    return {asset,balance,reserved,available:Math.max(0,balance-reserved)};
@@ -4062,7 +4066,7 @@ app.post('/api/admin/users-v2/:id/adjust-balance',admin,(req,res)=>{
  const uid=+req.params.id;if(!ownsUser(req.user,uid))return res.status(403).json({error:'You do not have access to this customer'});
  const section=String(req.body.section||'wallet').toLowerCase(),asset=String(req.body.asset||'USD').toUpperCase(),amount=+req.body.amount,direction=req.body.direction==='debit'?'debit':'credit';
  const reason=String(req.body.reason||'').trim().slice(0,300),internalNote=String(req.body.internalNote||'').trim().slice(0,500);
- if(!['wallet','portfolio','trading'].includes(section)||!['USD','USDT','BTC','ETH'].includes(asset)||!Number.isFinite(amount)||amount<=0)return res.status(400).json({error:'Choose a valid balance section, asset and amount'});
+ if(!['wallet','portfolio','trading'].includes(section)||!['USD','USDT','BTC','ETH','XRP'].includes(asset)||!Number.isFinite(amount)||amount<=0)return res.status(400).json({error:'Choose a valid balance section, asset and amount'});
  if(reason.length<5)return res.status(400).json({error:'Enter a clear reason for the customer notification'});
  seedSectionBalances(uid);
  const row=db.prepare('SELECT amount FROM section_balances WHERE user_id=? AND section=? AND asset=?').get(uid,section,asset),before=Number(row?.amount||0),after=direction==='credit'?before+amount:before-amount;
@@ -4127,11 +4131,11 @@ app.post('/api/admin/support/threads/:id/status',admin,(req,res)=>{const t=db.pr
 app.get('/api/admin/deposit-wallets',admin,(req,res)=>{
  res.set('Cache-Control','no-store');
  const scopeAdminId=depositWalletScopeAdminId(req.user);
- const ownWallets=db.prepare(`SELECT id,label,asset,network,address,active,created_at,updated_at
+ const ownWallets=db.prepare(`SELECT id,label,asset,network,address,destination_tag,active,created_at,updated_at
    FROM deposit_wallet_addresses WHERE admin_id=? ORDER BY active DESC,asset,network,id DESC`).all(scopeAdminId)
    .map(w=>({...w,customerVisible:!!w.active}));
  const saId=superAdminId();
- const inheritedWallets=req.user.role==='sub_admin'&&saId?db.prepare(`SELECT id,label,asset,network,address,active,created_at,updated_at
+ const inheritedWallets=req.user.role==='sub_admin'&&saId?db.prepare(`SELECT id,label,asset,network,address,destination_tag,active,created_at,updated_at
    FROM deposit_wallet_addresses WHERE admin_id=? ORDER BY active DESC,asset,network,id DESC`).all(saId).map(w=>({...w,shadowed:ownWallets.some(x=>x.active&&x.asset===w.asset&&x.network===w.network)})):[];
  const activeCount=ownWallets.filter(w=>w.active).length;
  res.json({
@@ -4149,15 +4153,16 @@ app.post('/api/admin/deposit-wallets',admin,(req,res)=>{
  const asset=String(req.body.asset||'').toUpperCase();
  const network=String(req.body.network||'').trim().toUpperCase().slice(0,30);
  const address=String(req.body.address||'').trim();
- if(!['BTC','USDT','ETH'].includes(asset))return res.status(400).json({error:'Deposit wallets support BTC, USDT or ETH.'});
- const allowedNetworks=asset==='BTC'?['BITCOIN']:asset==='ETH'?['ERC20','ARBITRUM','BASE','OPTIMISM']:['TRC20','ERC20','BEP20','SOL','POLYGON'];
+ const destinationTag=asset==='XRP'?String(req.body.destinationTag||'').trim().slice(0,20):'';
+ if(!['BTC','USDT','ETH','XRP'].includes(asset))return res.status(400).json({error:'Deposit wallets support BTC, USDT, ETH or XRP.'});
+ const allowedNetworks=asset==='BTC'?['BITCOIN']:asset==='ETH'?['ERC20','ARBITRUM','BASE','OPTIMISM']:asset==='XRP'?['XRPL']:['TRC20','ERC20','BEP20','SOL','POLYGON'];
  if(!allowedNetworks.includes(network))return res.status(400).json({error:`Choose a supported ${asset} network.`});
  if(address.length<8||address.length>180)return res.status(400).json({error:'Enter a valid public receiving address.'});
  const scopeAdminId=depositWalletScopeAdminId(req.user);
  const duplicate=db.prepare(`SELECT id FROM deposit_wallet_addresses WHERE admin_id=? AND asset=? AND network=? AND address=?`).get(scopeAdminId,asset,network,address);
  if(duplicate)return res.status(409).json({error:'This receiving address is already configured.'});
- const info=db.prepare(`INSERT INTO deposit_wallet_addresses(admin_id,label,asset,network,address,active)
-   VALUES(?,?,?,?,?,1)`).run(scopeAdminId,label,asset,network,address);
+ const info=db.prepare(`INSERT INTO deposit_wallet_addresses(admin_id,label,asset,network,address,destination_tag,active)
+   VALUES(?,?,?,?,?,?,1)`).run(scopeAdminId,label,asset,network,address,destinationTag||null);
  logActivity(req.user.id,req.user.id,'deposit_wallet_added',`${asset} ${network} public receiving address added`);
  res.json({ok:true,id:info.lastInsertRowid});
 });
@@ -4169,10 +4174,11 @@ app.put('/api/admin/deposit-wallets/:id',admin,(req,res)=>{
  const asset=String(req.body.asset??w.asset).toUpperCase();
  const network=String(req.body.network??w.network).trim().toUpperCase().slice(0,30);
  const address=String(req.body.address??w.address).trim();
- if(!['BTC','USDT','ETH'].includes(asset))return res.status(400).json({error:'Deposit wallets support BTC, USDT or ETH.'});
- const allowedNetworks=asset==='BTC'?['BITCOIN']:asset==='ETH'?['ERC20','ARBITRUM','BASE','OPTIMISM']:['TRC20','ERC20','BEP20','SOL','POLYGON'];
+ const destinationTag=asset==='XRP'?String(req.body.destinationTag??w.destination_tag??'').trim().slice(0,20):'';
+ if(!['BTC','USDT','ETH','XRP'].includes(asset))return res.status(400).json({error:'Deposit wallets support BTC, USDT, ETH or XRP.'});
+ const allowedNetworks=asset==='BTC'?['BITCOIN']:asset==='ETH'?['ERC20','ARBITRUM','BASE','OPTIMISM']:asset==='XRP'?['XRPL']:['TRC20','ERC20','BEP20','SOL','POLYGON'];
  if(!allowedNetworks.includes(network)||address.length<8||address.length>180)return res.status(400).json({error:'Enter a valid wallet type, network and public address.'});
- db.prepare(`UPDATE deposit_wallet_addresses SET label=?,asset=?,network=?,address=?,updated_at=CURRENT_TIMESTAMP WHERE id=?`).run(label,asset,network,address,w.id);
+ db.prepare(`UPDATE deposit_wallet_addresses SET label=?,asset=?,network=?,address=?,destination_tag=?,updated_at=CURRENT_TIMESTAMP WHERE id=?`).run(label,asset,network,address,destinationTag||null,w.id);
  res.json({ok:true});
 });
 app.post('/api/admin/deposit-wallets/:id/status',admin,(req,res)=>{
@@ -4194,7 +4200,7 @@ app.delete('/api/admin/deposit-wallets/:id',admin,(req,res)=>{
 // It does not verify a blockchain transaction.
 async function depositUsdQuote(asset,amount){
  const a=String(asset||'').toUpperCase(),n=Number(amount);
- if(!['BTC','USDT','ETH'].includes(a)||!Number.isFinite(n)||n<=0)throw new Error('Invalid deposit amount');
+ if(!['BTC','USDT','ETH','XRP'].includes(a)||!Number.isFinite(n)||n<=0)throw new Error('Invalid deposit amount');
  if(a==='USDT')return {rate:1,usd:n};
  let timer;
  try{
@@ -4225,7 +4231,7 @@ function verifyDepositQuoteToken(token){
   if(a.length!==b.length||!crypto.timingSafeEqual(a,b))return null;
   const p=JSON.parse(Buffer.from(body,'base64url').toString('utf8'));
   if(!p||Number(p.exp)<Date.now())return null;
-  if(!['BTC','USDT','ETH'].includes(String(p.asset||'').toUpperCase()))return null;
+  if(!['BTC','USDT','ETH','XRP'].includes(String(p.asset||'').toUpperCase()))return null;
   if(!(Number(p.usd)>0)||!(Number(p.rate)>0)||!(Number(p.cryptoAmount)>0))return null;
   return p;
  }catch{return null}
@@ -4269,7 +4275,7 @@ function effectiveDepositWalletByIdForUser(user,walletId,asset=null,network=null
 app.get('/api/deposit/options',auth,(req,res)=>{
  if(req.user.role!=='user')return res.status(403).json({error:'Customer account required'});
  res.set('Cache-Control','no-store, no-cache, must-revalidate, private');
- const wallets=effectiveDepositWalletsForUser(req.user).map(w=>({id:w.id,label:w.label,asset:w.asset,network:w.network,address:w.address,scope:w.scope}));
+ const wallets=effectiveDepositWalletsForUser(req.user).map(w=>({id:w.id,label:w.label,asset:w.asset,network:w.network,address:w.address,destinationTag:w.destination_tag||null,scope:w.scope}));
  console.log(`[DEPOSIT OPTIONS] user=${req.user.id} owner=${req.user.owner_admin_id||'global'} globalAdmin=${superAdminId()||'none'} wallets=${wallets.length}`);
  res.json({wallets});
 });
@@ -4287,7 +4293,7 @@ app.get('/api/deposit/qr',auth,async(req,res)=>{
 });
 app.get('/api/deposits',auth,(req,res)=>{
  if(req.user.role!=='user')return res.status(403).json({error:'Customer account required'});
- res.json({deposits:db.prepare(`SELECT id,reference,asset,network,wallet_address,amount,usd_value,usd_rate,source,txid,status,review_reason,created_at,reviewed_at,
+ res.json({deposits:db.prepare(`SELECT id,reference,asset,network,wallet_address,destination_tag,amount,usd_value,usd_rate,source,txid,status,review_reason,created_at,reviewed_at,
    chain_verification_status,chain_verified_amount,chain_id,chain_verification_note,chain_verified_at,
    payment_marked_sent_at,receipt_issued_at,credited_usd,credited_rate,credit_note,requested_usd,amount_input_mode,
    credit_corrected_at,credit_correction_reason
@@ -4295,7 +4301,7 @@ app.get('/api/deposits',auth,(req,res)=>{
 });
 app.get('/api/deposits/:id/receipt',auth,(req,res)=>{
  if(req.user.role!=='user')return res.status(403).json({error:'Customer account required'});
- const d=db.prepare(`SELECT id,reference,asset,network,wallet_address,amount,usd_value,usd_rate,source,txid,status,review_reason,created_at,reviewed_at,
+ const d=db.prepare(`SELECT id,reference,asset,network,wallet_address,destination_tag,amount,usd_value,usd_rate,source,txid,status,review_reason,created_at,reviewed_at,
    payment_marked_sent_at,receipt_issued_at,credited_usd,credited_rate,credit_note,requested_usd,amount_input_mode,
    credit_corrected_at,credit_correction_reason,
    chain_verification_status,chain_verified_amount,chain_id,chain_verification_note,chain_verified_at
@@ -4323,8 +4329,8 @@ app.post('/api/deposits',auth,async(req,res)=>{
 
   console.log(`[DEPOSIT REQUEST] user=${req.user.id} asset=${asset||'missing'} network=${network||'missing'} usd=${Number.isFinite(requestedUsd)?requestedUsd:'n/a'} request=${clientRequestId||'none'}`);
 
-  if(!['BTC','USDT','ETH'].includes(asset)||!network||!walletId)
-    return res.status(400).json({error:'Choose a BTC/USDT/ETH receiving wallet.'});
+  if(!['BTC','USDT','ETH','XRP'].includes(asset)||!network||!walletId)
+    return res.status(400).json({error:'Choose a BTC/USDT/ETH/XRP receiving wallet.'});
 
   // If a prior browser request timed out after the receipt was already created,
   // return the original receipt instead of creating a duplicate.
@@ -4374,11 +4380,11 @@ app.post('/api/deposits',auth,async(req,res)=>{
 
   const ref=depositRef();
   const ins=db.prepare(`INSERT INTO deposit_requests(
-      reference,user_id,owner_admin_id,wallet_admin_id,asset,network,wallet_address,amount,
+      reference,user_id,owner_admin_id,wallet_admin_id,asset,network,wallet_address,destination_tag,amount,
       usd_value,usd_rate,source,txid,status,user_note,payment_marked_sent_at,receipt_issued_at,
       requested_usd,amount_input_mode,client_request_id
-    ) VALUES(?,?,?,?,?,?,?,?,?,?, 'customer',?,'pending',?,CURRENT_TIMESTAMP,CURRENT_TIMESTAMP,?,?,?)`).run(
-      ref,req.user.id,req.user.owner_admin_id||null,w.admin_id,asset,network,w.address,amount,
+    ) VALUES(?,?,?,?,?,?,?,?,?,?,?, 'customer',?,'pending',?,CURRENT_TIMESTAMP,CURRENT_TIMESTAMP,?,?,?)`).run(
+      ref,req.user.id,req.user.owner_admin_id||null,w.admin_id,asset,network,w.address,w.destination_tag||null,amount,
       quote?.usd||null,quote?.rate||null,txid||null,note,
       inputMode==='usd'?requestedUsd:null,inputMode,clientRequestId
     );
@@ -4561,7 +4567,7 @@ app.post('/api/admin/users-v2/:id/manual-deposit',admin,async(req,res)=>{
  let quote;try{quote=await depositUsdQuote(asset,amount)}catch(e){return res.status(503).json({error:e.message||'USD reference value unavailable'})}
  const ref=depositRef();
  db.transaction(()=>{
-   db.prepare(`INSERT INTO deposit_requests(reference,user_id,owner_admin_id,wallet_admin_id,asset,network,wallet_address,amount,usd_value,usd_rate,source,txid,status,user_note,review_reason,reviewed_by,reviewed_at,credited_usd,credited_rate,receipt_issued_at,amount_input_mode)
+   db.prepare(`INSERT INTO deposit_requests(reference,user_id,owner_admin_id,wallet_admin_id,asset,network,wallet_address,destination_tag,amount,usd_value,usd_rate,source,txid,status,user_note,review_reason,reviewed_by,reviewed_at,credited_usd,credited_rate,receipt_issued_at,amount_input_mode)
      VALUES(?,?,?,?,?,?,?,?,?,?, 'admin_manual',?,'approved',?,?,?,CURRENT_TIMESTAMP,?,?,CURRENT_TIMESTAMP,'crypto_admin')`)
      .run(ref,uid,user.owner_admin_id||null,req.user.id,asset,network,'ADMIN MANUAL CREDIT',amount,quote.usd,quote.rate,txid||null,note||null,note||'Admin-recorded crypto deposit',req.user.id,quote.usd,quote.rate);
    seedSectionBalances(uid);
@@ -4837,8 +4843,8 @@ async function cryptoCatalog(){
 async function portfolioReferencePrices(){
  const rows=await cryptoCatalog();
  const find=s=>Number(rows.find(x=>x.symbol===s)?.price||0);
- const prices={USD:1,USDT:find('USDT')||1,BTC:find('BTC'),ETH:find('ETH')};
- if(!(prices.BTC>0)||!(prices.ETH>0))throw new Error('BTC/ETH reference prices are unavailable.');
+ const prices={USD:1,USDT:find('USDT')||1,BTC:find('BTC'),ETH:find('ETH'),XRP:find('XRP')};
+ if(!(prices.BTC>0)||!(prices.ETH>0)||!(prices.XRP>0))throw new Error('BTC/ETH/XRP reference prices are unavailable.');
  return prices;
 }
 function portfolioSwitchRef(){return 'OT-SW-'+Date.now().toString(36).toUpperCase()+'-'+crypto.randomBytes(3).toString('hex').toUpperCase()}
@@ -4850,7 +4856,7 @@ function portfolioAssetAmount(userId,asset){
 app.get('/api/portfolio/switch/quote',auth,async(req,res)=>{
  if(req.user.role!=='user')return res.status(403).json({error:'Customer account required.'});
  const from=String(req.query.from||'').toUpperCase(),to=String(req.query.to||'').toUpperCase(),amount=Number(req.query.amount);
- const supported=['USD','USDT','BTC','ETH'];
+ const supported=['USD','USDT','BTC','ETH','XRP'];
  if(!supported.includes(from)||!supported.includes(to)||from===to||!Number.isFinite(amount)||amount<=0)
    return res.status(400).json({error:'Choose two different supported assets and enter a valid amount.'});
  seedSectionBalances(req.user.id);
@@ -4872,7 +4878,7 @@ app.get('/api/portfolio/switch/quote',auth,async(req,res)=>{
 app.post('/api/portfolio/switch',auth,async(req,res)=>{
  if(req.user.role!=='user')return res.status(403).json({error:'Customer account required.'});
  const from=String(req.body.from||'').toUpperCase(),to=String(req.body.to||'').toUpperCase(),amount=Number(req.body.amount),pin=String(req.body.pin||'');
- const supported=['USD','USDT','BTC','ETH'];
+ const supported=['USD','USDT','BTC','ETH','XRP'];
  if(!supported.includes(from)||!supported.includes(to)||from===to||!Number.isFinite(amount)||amount<=0)
    return res.status(400).json({error:'Choose two different supported assets and enter a valid amount.'});
  const pinCheck=sensitivePinCheck(req.user.id,pin);
@@ -4936,7 +4942,7 @@ async function forexCatalog(){
  marketCache.forex={at:now,data};return data;
 }
 
-const homeHistoryCache={BTC:{at:0,prices:[]},ETH:{at:0,prices:[]}};
+const homeHistoryCache={BTC:{at:0,prices:[]},ETH:{at:0,prices:[]},XRP:{at:0,prices:[]}};
 app.get('/api/public/market-ticker',async(req,res)=>{
  try{
    const [crypto,forex]=await Promise.all([cryptoCatalog(),forexCatalog()]);
@@ -4945,14 +4951,14 @@ app.get('/api/public/market-ticker',async(req,res)=>{
    res.set('Cache-Control','public, max-age=15, stale-while-revalidate=45');
    res.json({
      reference:true,
-     markets:{BTCUSD:c('BTC'),ETHUSD:c('ETH'),EURUSD:f('EUR/USD'),GBPUSD:f('GBP/USD'),USDJPY:f('USD/JPY')},
+     markets:{BTCUSD:c('BTC'),ETHUSD:c('ETH'),XRPUSD:c('XRP'),EURUSD:f('EUR/USD'),GBPUSD:f('GBP/USD'),USDJPY:f('USD/JPY')},
      updatedAt:new Date().toISOString()
    });
  }catch(e){
    const crypto=marketCache.crypto.data||[],forex=marketCache.forex.data||[];
    const c=s=>crypto.find(x=>x.symbol===s)?.price||null;
    const f=p=>forex.find(x=>x.pair===p)?.price||null;
-   const markets={BTCUSD:c('BTC'),ETHUSD:c('ETH'),EURUSD:f('EUR/USD'),GBPUSD:f('GBP/USD'),USDJPY:f('USD/JPY')};
+   const markets={BTCUSD:c('BTC'),ETHUSD:c('ETH'),XRPUSD:c('XRP'),EURUSD:f('EUR/USD'),GBPUSD:f('GBP/USD'),USDJPY:f('USD/JPY')};
    if(Object.values(markets).some(v=>v!=null)){
      return res.json({reference:true,stale:true,markets,updatedAt:new Date().toISOString()});
    }
@@ -4960,13 +4966,14 @@ app.get('/api/public/market-ticker',async(req,res)=>{
  }
 });
 app.get('/api/public/market-history',async(req,res)=>{
- const symbol=String(req.query.symbol||'BTC').toUpperCase()==='ETH'?'ETH':'BTC';
+ const requested=String(req.query.symbol||'BTC').toUpperCase();
+ const symbol=['BTC','ETH','XRP'].includes(requested)?requested:'BTC';
  const cached=homeHistoryCache[symbol];
  if(Date.now()-cached.at<300000&&cached.prices.length){
    res.set('Cache-Control','public, max-age=30, stale-while-revalidate=120');
    return res.json({symbol,prices:cached.prices,reference:true,cached:true,updatedAt:new Date(cached.at).toISOString()});
  }
- const id=symbol==='ETH'?'ethereum':'bitcoin';
+ const id=symbol==='ETH'?'ethereum':symbol==='XRP'?'ripple':'bitcoin';
  try{
    const r=await fetch(`https://api.coingecko.com/api/v3/coins/${id}/market_chart?vs_currency=usd&days=1`,{headers:{accept:'application/json'}});
    if(!r.ok)throw new Error(`Market history provider HTTP ${r.status}`);
@@ -5591,7 +5598,7 @@ function investmentAssetPrice(prices,asset){
  return 0;
 }
 async function investmentQuoteFor(user,plan,asset,amount,duration){
- if(!['USD','BTC','ETH','USDT'].includes(asset))throw new Error('Choose an available funding balance.');
+ if(!['USD','BTC','ETH','USDT','XRP'].includes(asset))throw new Error('Choose an available funding balance.');
  const term=plan.terms.find(x=>Number(x.duration_days)===Number(duration));
  if(!term)throw new Error('Choose one of the available plan periods.');
  let price=1;
@@ -6043,7 +6050,7 @@ function publicTransferRecipient(u){
 
 app.get('/api/internal-transfer/status',auth,(req,res)=>{
  if(req.user.role!=='user')return res.status(403).json({error:'Customer account required.'});
- const assets=['BTC','ETH','USDT'].map(asset=>({asset,...internalTransferAssetState(req.user.id,asset)}));
+ const assets=['BTC','ETH','USDT','XRP'].map(asset=>({asset,...internalTransferAssetState(req.user.id,asset)}));
  res.set('Cache-Control','no-store');
  res.json({eligibility:kycGate(req.user,'internal_transfer'),enabled:true,feePercent:0,feeAmount:0,assets});
 });
@@ -6087,7 +6094,7 @@ app.post('/api/internal-transfer',auth,(req,res)=>{
  const amount=Number(req.body.amount);
  const note=String(req.body.note||'').trim().slice(0,300);
  const pin=String(req.body.pin||'');
- if(!['BTC','ETH','USDT'].includes(asset))return res.status(400).json({error:'Choose BTC, ETH or USDT.'});
+ if(!['BTC','ETH','USDT','XRP'].includes(asset))return res.status(400).json({error:'Choose BTC, ETH, USDT or XRP.'});
  if(!Number.isFinite(amount)||amount<=0)return res.status(400).json({error:'Enter a valid transfer amount.'});
  const recipient=findTransferRecipient(identifier);
  if(!recipient)return res.status(404).json({error:'Recipient account was not found.'});

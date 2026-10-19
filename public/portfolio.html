@@ -19,7 +19,7 @@
   </div>
   <div class="portfolio-side-card">
     <span>Asset switching</span>
-    <b>BTC • ETH • USDT • USD</b>
+    <b>BTC • ETH • XRP • USDT • USD</b>
     <small>Reference pricing • PIN confirmation</small>
     <a class="btn" href="#switch">Open Switch</a>
   </div>
@@ -36,13 +36,13 @@
   <div class="switch-flow">
     <div class="switch-asset-select">
       <label>From</label>
-      <select id="fromAsset"><option>BTC</option><option>ETH</option><option>USDT</option><option>USD</option></select>
+      <select id="fromAsset"><option>BTC</option><option>ETH</option><option>USDT</option><option>XRP</option><option>USD</option></select>
       <small id="fromBalance">Available: —</small>
     </div>
     <button class="switch-direction" id="swapAssets" type="button" title="Swap direction">⇄</button>
     <div class="switch-asset-select">
       <label>To</label>
-      <select id="toAsset"><option>ETH</option><option>BTC</option><option>USDT</option><option>USD</option></select>
+      <select id="toAsset"><option>ETH</option><option>BTC</option><option>USDT</option><option>XRP</option><option>USD</option></select>
       <small id="toHint">Choose destination asset</small>
     </div>
     <div class="switch-amount-box">
@@ -93,6 +93,7 @@ const assetMeta={
  BTC:{icon:'₿',name:'Bitcoin',tag:'Primary portfolio value'},
  ETH:{icon:'◆',name:'Ethereum',tag:'Crypto holding'},
  USDT:{icon:'₮',name:'Tether',tag:'Stablecoin holding'},
+ XRP:{icon:'✕',name:'XRP',tag:'XRP Ledger holding'},
  USD:{icon:'$',name:'Internal USD',tag:'Internal account ledger'}
 };
 let quoteTimer=null,lastQuote=null,availability={};
@@ -105,12 +106,14 @@ function assetUsdValue(asset){
  if(asset==='BTC')return amount*Number(OT.prices.BTC||0);
  if(asset==='ETH')return amount*Number(OT.prices.ETH||0);
  if(asset==='USDT')return amount*Number(OT.prices.USDT||1);
+ if(asset==='XRP')return amount*Number(OT.prices.XRP||0);
  return amount;
 }
 function preferredDestination(from){
  if(from==='BTC')return 'ETH';
  if(from==='ETH')return 'BTC';
- if(from==='USDT')return 'BTC';
+ if(from==='USDT')return 'XRP';
+ if(from==='XRP')return 'BTC';
  return 'BTC';
 }
 function renderPortfolio(){
@@ -119,7 +122,7 @@ function renderPortfolio(){
  $('#totalBtcHolding').textContent=`${btcAmount.toLocaleString(undefined,{minimumFractionDigits:8,maximumFractionDigits:8})} BTC`;
  $('#totalBtcPrice').textContent=btcPrice>0?money(btcPrice):'Unavailable';
 
- const rows=['BTC','ETH','USDT','USD'];
+ const rows=['BTC','ETH','XRP','USDT','USD'];
  $('#assetCards').innerHTML=rows.map(a=>{
    const m=assetMeta[a],balance=portfolioAssetBalance(a),wallet=walletAssetBalance(a),available=availableAssetBalance(a),reserved=Math.max(0,wallet-available);
    return `<article class="portfolio-asset-card" data-asset-card="${a}">

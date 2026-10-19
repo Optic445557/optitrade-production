@@ -43,7 +43,7 @@
  const setQuoteIdle=()=>{$('#sendingAmount').textContent=defaultSending;$('#rateText').textContent=defaultRate;};
  function loadAssetOptions(){
    const assets=[...new Set(wallets.map(x=>x.asset))];
-   A.innerHTML=assets.map(x=>`<option value="${esc(x)}">${x==='BTC'?'Bitcoin (BTC)':x==='ETH'?'Ethereum (ETH)':'Tether (USDT)'}</option>`).join('');
+   A.innerHTML=assets.map(x=>`<option value="${esc(x)}">${x==='BTC'?'Bitcoin (BTC)':x==='ETH'?'Ethereum (ETH)':x==='XRP'?'XRP (XRP Ledger)':'Tether (USDT)'}</option>`).join('');
    loadNetworkOptions();
  }
  function loadNetworkOptions(){
@@ -58,6 +58,7 @@
    $('#selectedTitle').textContent=`Fund with ${A.value}`;
    $('#selectedNetwork').textContent=N.value+(w?.label?' • '+w.label:'');
    $('#addressAsset').textContent=A.value||'crypto';
+   const tag=w?.destinationTag||'';$('#xrpTagBox').hidden=!(w?.asset==='XRP'&&tag);$('#destinationTagText').textContent=tag||'—';
    $('#addressNetwork').textContent=N.value||'this network';
    scheduleQuote(true);
  }
@@ -105,6 +106,7 @@
  $('#closeDepositModal').onclick=()=>$('#depositModal').hidden=true;
  $('#depositModal').onclick=e=>{if(e.target===$('#depositModal'))$('#depositModal').hidden=true};
  $('#copyAddress').onclick=async()=>{if(!selectedWallet)return;await navigator.clipboard.writeText(selectedWallet.address);toast('Receiving address copied.')};
+ $('#copyDestinationTag').onclick=async()=>{const tag=selectedWallet?.destinationTag;if(!tag)return;await navigator.clipboard.writeText(tag);toast('XRP destination tag copied.')};
  $('#usdAmount').oninput=()=>scheduleQuote(false);
  function statusLabel(x){return x.status==='approved'?'Approved & Credited':x.status==='rejected'?'Declined':'Pending Review'}
  async function hist(){

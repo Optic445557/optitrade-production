@@ -33,14 +33,14 @@
       <div class="ticker-marquee" id="homeTickerMarquee">
         <div class="ticker-group" id="homeTicker">
           <span>BTC/USD <b id="btcTicker">Loading…</b></span>
-          <span>ETH/USD <b id="ethTicker">Loading…</b></span>
+          <span>ETH/USD <b id="ethTicker">Loading…</b></span><span>XRP/USD <b id="xrpTicker">Loading…</b></span>
           <span>EUR/USD <b id="eurTicker">—</b></span>
           <span>GBP/USD <b id="gbpTicker">—</b></span>
           <span>USD/JPY <b id="jpyTicker">—</b></span>
         </div>
         <div class="ticker-group" aria-hidden="true">
           <span>BTC/USD <b data-ticker-clone="btcTicker">Loading…</b></span>
-          <span>ETH/USD <b data-ticker-clone="ethTicker">Loading…</b></span>
+          <span>ETH/USD <b data-ticker-clone="ethTicker">Loading…</b></span><span>XRP/USD <b data-ticker-clone="xrpTicker">Loading…</b></span>
           <span>EUR/USD <b data-ticker-clone="eurTicker">—</b></span>
           <span>GBP/USD <b data-ticker-clone="gbpTicker">—</b></span>
           <span>USD/JPY <b data-ticker-clone="jpyTicker">—</b></span>
@@ -101,7 +101,7 @@
             </div>
             <div class="pair-switches">
               <button class="active" data-home-pair="BTC">BTC</button>
-              <button data-home-pair="ETH">ETH</button>
+              <button data-home-pair="ETH">ETH</button><button data-home-pair="XRP">XRP</button>
             </div>
           </div>
           <canvas id="heroChart"></canvas>
@@ -146,6 +146,18 @@
       </div>
     </section>
 
+    
+    <section class="xrp-launch-section" id="xrp">
+      <div class="xrp-launch-copy">
+        <span class="section-kicker">NOW ON OPTITRADE</span>
+        <h2>XRP joins the OptiTrade market experience.</h2>
+        <p>Follow XRP/USD reference pricing, trade XRP/USD, hold XRP in your OptiTrade account portfolio, switch supported account assets, and prepare XRPL deposits with destination-tag support.</p>
+        <div class="xrp-feature-row"><span>⚡ XRP/USD market</span><span>◎ Portfolio tracking</span><span>⇄ Asset switching</span><span>◈ XRPL-ready deposits</span></div>
+        <div class="xrp-actions"><a class="hero-primary" href="/markets.html">Explore XRP Market <span>→</span></a><a class="hero-secondary" href="/register.html">Create Account</a></div>
+        <small>Market prices are reference data. XRP deposit credits remain subject to the OptiTrade review workflow.</small>
+      </div>
+      <div class="xrp-launch-visual"><div class="xrp-orb">XRP</div><div class="xrp-quote"><span>XRP / USD</span><strong id="xrpPromoPrice">Loading…</strong><small>Reference market</small></div><div class="xrp-lines"><i></i><i></i><i></i><i></i><i></i></div></div>
+    </section>
     <section class="features-band" id="features">
       <div class="section-heading centered">
         <span class="section-kicker">WHY OPTITRADE</span>
