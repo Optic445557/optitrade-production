@@ -32,6 +32,11 @@ function renderAccount(){
  const availableCryptoValue=usdValueOf({USD:0,USDT:available.USDT,BTC:available.BTC,ETH:available.ETH,XRP:available.XRP});
  const reservedValue=usdValueOf(reserved);
  const btcAmount=Number(totalByAsset.BTC||0),btcPrice=Number(prices.BTC||0);
+ const xrpAmount=Number(totalByAsset.XRP||0),xrpPrice=Number(prices.XRP||0),xrpUsd=xrpAmount*xrpPrice;
+ const xrpBalEl=$('#xrpDashboardBalance'),xrpUsdEl=$('#xrpDashboardUsd'),xrpPriceEl=$('#xrpDashboardPrice');
+ if(xrpBalEl)xrpBalEl.textContent=`${xrpAmount.toLocaleString(undefined,{minimumFractionDigits:0,maximumFractionDigits:6})} XRP`;
+ if(xrpUsdEl)xrpUsdEl.textContent=`≈ ${money(xrpUsd)}`;
+ if(xrpPriceEl)xrpPriceEl.textContent=xrpPrice>0?money(xrpPrice):'Unavailable';
  $('#portfolioValue').textContent=money(accountValue);
  $('#portfolioBtcHolding').textContent=`${btcAmount.toLocaleString(undefined,{minimumFractionDigits:8,maximumFractionDigits:8})} BTC`;
  $('#portfolioBtcPrice').textContent=btcPrice>0?money(btcPrice):'Unavailable';
@@ -120,6 +125,7 @@ async function loadMarkets(){
   $('#tickBtc').textContent=prices.BTC?money(prices.BTC):'Unavailable';
   $('#tickEth').textContent=prices.ETH?money(prices.ETH):'Unavailable';
   if($('#tickXrp'))$('#tickXrp').textContent=prices.XRP?money(prices.XRP):'Unavailable';
+  if($('#xrpDashboardPrice'))$('#xrpDashboardPrice').textContent=prices.XRP?money(prices.XRP):'Unavailable';
   $('#tickEur').textContent=fx.EUR?fx.EUR.toFixed(5):'—';
   $('#tickGbp').textContent=fx.GBP?fx.GBP.toFixed(5):'—';
   $('#tickJpy').textContent=fx.JPY?fx.JPY.toFixed(2):'—';

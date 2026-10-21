@@ -4164,7 +4164,8 @@ app.post('/api/admin/deposit-wallets',admin,(req,res)=>{
  const info=db.prepare(`INSERT INTO deposit_wallet_addresses(admin_id,label,asset,network,address,destination_tag,active)
    VALUES(?,?,?,?,?,?,1)`).run(scopeAdminId,label,asset,network,address,destinationTag||null);
  logActivity(req.user.id,req.user.id,'deposit_wallet_added',`${asset} ${network} public receiving address added`);
- res.json({ok:true,id:info.lastInsertRowid});
+ console.log(`[DEPOSIT WALLET SAVED] admin=${req.user.id} scope=${scopeAdminId} asset=${asset} network=${network} tag=${destinationTag?'yes':'no'}`);
+ res.json({ok:true,id:info.lastInsertRowid,asset,network,active:true,destinationTag:destinationTag||null});
 });
 app.put('/api/admin/deposit-wallets/:id',admin,(req,res)=>{
  const w=db.prepare('SELECT * FROM deposit_wallet_addresses WHERE id=?').get(req.params.id);
@@ -4179,7 +4180,8 @@ app.put('/api/admin/deposit-wallets/:id',admin,(req,res)=>{
  const allowedNetworks=asset==='BTC'?['BITCOIN']:asset==='ETH'?['ERC20','ARBITRUM','BASE','OPTIMISM']:asset==='XRP'?['XRPL']:['TRC20','ERC20','BEP20','SOL','POLYGON'];
  if(!allowedNetworks.includes(network)||address.length<8||address.length>180)return res.status(400).json({error:'Enter a valid wallet type, network and public address.'});
  db.prepare(`UPDATE deposit_wallet_addresses SET label=?,asset=?,network=?,address=?,destination_tag=?,updated_at=CURRENT_TIMESTAMP WHERE id=?`).run(label,asset,network,address,destinationTag||null,w.id);
- res.json({ok:true});
+ console.log(`[DEPOSIT WALLET UPDATED] admin=${req.user.id} wallet=${w.id} asset=${asset} network=${network} tag=${destinationTag?'yes':'no'}`);
+ res.json({ok:true,id:w.id,asset,network,destinationTag:destinationTag||null});
 });
 app.post('/api/admin/deposit-wallets/:id/status',admin,(req,res)=>{
  const w=db.prepare('SELECT * FROM deposit_wallet_addresses WHERE id=?').get(req.params.id);

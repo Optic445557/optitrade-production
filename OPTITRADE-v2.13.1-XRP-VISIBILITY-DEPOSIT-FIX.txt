@@ -1,0 +1,21 @@
+OptiTrade v2.13.1 — XRP Visibility + Deposit Wallet Input Fix
+
+- Fixes Admin Deposit Wallet form responsiveness by using explicit DOM bindings.
+- XRP reliably switches to XRPL and shows the optional Destination Tag field.
+- Better save/error feedback for receiving-wallet input.
+- Customer Deposit asset/network changes immediately select the matching wallet.
+- Adds a real, visible XRP dashboard card showing XRP balance, XRP/USD price and approximate USD value.
+- XRP dashboard actions: Trade XRP, Deposit XRP, View Portfolio.
+- Adds safe Render diagnostics:
+  [DEPOSIT WALLET SAVED]
+  [DEPOSIT WALLET UPDATED]
+
+Files:
+admin/wallets.html
+public/deposit.html
+public/dashboard.html
+public/js/dashboard.js
+server/app.js
+package.json
+
+No .env, database, signing keys, API keys, passwords or node_modules included.

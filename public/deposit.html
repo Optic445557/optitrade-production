@@ -101,7 +101,7 @@
    $('#depositModal').hidden=false;
  };
  W.onchange=()=>showWallet(wallets.find(x=>String(x.id)===String(W.value)));
- A.onchange=()=>{loadNetworkOptions();selectedWallet=null;lastQuote=null;scheduleQuote(true)};
+ A.onchange=()=>{loadNetworkOptions();selectedWallet=null;lastQuote=null;const rows=modalWallets();if(rows.length){W.innerHTML=rows.map(x=>`<option value="${x.id}">${esc(x.label||x.asset+' '+x.network)} • ${esc(x.address.slice(0,8))}…${esc(x.address.slice(-6))}</option>`).join('');showWallet(rows[0])}else setQuoteIdle()};
  N.onchange=()=>{selectedWallet=null;lastQuote=null;const rows=modalWallets();if(rows.length){W.innerHTML=rows.map(x=>`<option value="${x.id}">${esc(x.label||x.asset+' '+x.network)} • ${esc(x.address.slice(0,8))}…${esc(x.address.slice(-6))}</option>`).join('');showWallet(rows[0])}else setQuoteIdle()};
  $('#closeDepositModal').onclick=()=>$('#depositModal').hidden=true;
  $('#depositModal').onclick=e=>{if(e.target===$('#depositModal'))$('#depositModal').hidden=true};
@@ -116,7 +116,8 @@
      return `<article class="deposit-history-card"><div><b>${statusLabel(x)}</b><small>${esc(x.reference)} • ${new Date(String(x.payment_marked_sent_at||x.created_at).replace(' ','T')+'Z').toLocaleString()}</small></div><div class="deposit-credit-line"><span>${x.amount_input_mode==='usd'?'Requested deposit':'Recorded deposit value'}</span><b>${requested?('$'+requested.toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2})):'Pending'}</b></div><div class="deposit-crypto-line"><span>${Number(x.amount).toLocaleString(undefined,{maximumFractionDigits:10})} ${esc(x.asset)}</span><small>${esc(x.network)}${x.amount_input_mode==='crypto_legacy'?' • legacy crypto-entry record':''}</small></div><div class="deposit-credit-line"><span>${x.status==='approved'&&x.credited_usd!=null?'Actual credited USD':'Account credit'}</span><b>${x.status==='approved'&&x.credited_usd!=null?('$'+Number(x.credited_usd).toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2})):'Pending review'}</b></div>${x.credit_correction_reason?`<p>Credit correction: ${esc(x.credit_correction_reason)}</p>`:''}${x.review_reason?`<p>Review: ${esc(x.review_reason)}</p>`:''}<div class="deposit-history-actions"><a class="btn" href="/deposit-receipt.html?id=${x.id}">View Receipt</a></div></article>`;
    }).join(''):'<div class="empty-state">No deposit receipts yet.</div>';
  }
- let r=await fetch('/api/deposit/options',{cache:'no-store'}),d=await r.json();
+ let r=await fetch('/api/deposit/options',{cache:'no-store'}),d=await r.json().catch(()=>({}));
+ if(!r.ok){toast(d.error||'Could not load receiving wallets.');return}
  wallets=d.wallets||[];
  if(!wallets.length){
    A.innerHTML='<option>No receiving wallet available</option>';
