@@ -1,0 +1,21 @@
+OptiTrade v2.13.2 — Deposit Wallet Customer Visibility Fix
+
+Root cause fixed:
+The customer-facing effective wallet resolver was still filtering active wallets to
+BTC / USDT / ETH only. XRP wallets could be active in Admin but were silently
+excluded from /api/deposit/options.
+
+Fix:
+- Customer wallet resolver now includes BTC, USDT, ETH and XRP.
+- XRP destination_tag is carried through to the customer deposit API.
+- Existing active Admin wallets remain visible.
+- Sub-admin override behavior is preserved.
+- Render diagnostic now shows the exact active wallet assets/networks returned:
+  [DEPOSIT OPTIONS] ... wallets=4 assets=BTC:BITCOIN,ETH:ERC20,USDT:TRC20,XRP:XRPL
+
+Files:
+- server/app.js
+- package.json
+- public/deposit.html (included unchanged from latest patch so the matching UI stays together)
+
+No .env, database, signing keys, API keys, passwords, or node_modules included.

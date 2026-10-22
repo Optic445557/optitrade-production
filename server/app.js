@@ -4255,13 +4255,15 @@ app.get('/api/deposit/quote',auth,async(req,res)=>{
 
 function effectiveDepositWalletsForUser(user){
  const saId=superAdminId();
- const global=saId?db.prepare(`SELECT id,label,asset,network,address,admin_id FROM deposit_wallet_addresses
-   WHERE admin_id=? AND active=1 AND asset IN ('BTC','USDT','ETH')
+ const global=saId?db.prepare(`SELECT id,label,asset,network,address,destination_tag,admin_id
+   FROM deposit_wallet_addresses
+   WHERE admin_id=? AND active=1 AND asset IN ('BTC','USDT','ETH','XRP')
    ORDER BY asset,network,id`).all(saId):[];
  const adminId=customerAdminId(user);
  if(!adminId)return global.map(w=>({...w,scope:'global'}));
- const local=db.prepare(`SELECT id,label,asset,network,address,admin_id FROM deposit_wallet_addresses
-   WHERE admin_id=? AND active=1 AND asset IN ('BTC','USDT','ETH')
+ const local=db.prepare(`SELECT id,label,asset,network,address,destination_tag,admin_id
+   FROM deposit_wallet_addresses
+   WHERE admin_id=? AND active=1 AND asset IN ('BTC','USDT','ETH','XRP')
    ORDER BY asset,network,id`).all(adminId);
  const overridden=new Set(local.map(w=>`${w.asset}|${w.network}`));
  return [
@@ -4278,7 +4280,7 @@ app.get('/api/deposit/options',auth,(req,res)=>{
  if(req.user.role!=='user')return res.status(403).json({error:'Customer account required'});
  res.set('Cache-Control','no-store, no-cache, must-revalidate, private');
  const wallets=effectiveDepositWalletsForUser(req.user).map(w=>({id:w.id,label:w.label,asset:w.asset,network:w.network,address:w.address,destinationTag:w.destination_tag||null,scope:w.scope}));
- console.log(`[DEPOSIT OPTIONS] user=${req.user.id} owner=${req.user.owner_admin_id||'global'} globalAdmin=${superAdminId()||'none'} wallets=${wallets.length}`);
+ console.log(`[DEPOSIT OPTIONS] user=${req.user.id} owner=${req.user.owner_admin_id||'global'} globalAdmin=${superAdminId()||'none'} wallets=${wallets.length} assets=${wallets.map(w=>w.asset+':'+w.network).join(',')||'none'}`);
  res.json({wallets});
 });
 app.get('/api/deposit/qr',auth,async(req,res)=>{

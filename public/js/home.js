@@ -36,7 +36,7 @@ function draw(){
 async function loadHero(symbol=current){
   current=symbol;
   document.querySelectorAll('[data-home-pair]').forEach(b=>b.classList.toggle('active',b.dataset.homePair===symbol));
-  const id=symbol==='BTC'?'bitcoin':symbol==='ETH'?'ethereum':'ripple';
+  const id=symbol==='BTC'?'bitcoin':'ethereum';
   try{
     const r=await fetch(`/api/public/market-history?symbol=${encodeURIComponent(symbol)}`,{cache:'no-store'});
     if(!r.ok)throw 0;
@@ -88,8 +88,6 @@ async function ticker(){
     const d=await r.json(),m=d.markets||{};
     $('btcTicker').textContent=money(m.BTCUSD);
     $('ethTicker').textContent=money(m.ETHUSD);
-    if($('xrpTicker'))$('xrpTicker').textContent=money(m.XRPUSD);
-    if($('xrpPromoPrice'))$('xrpPromoPrice').textContent=money(m.XRPUSD);
     $('eurTicker').textContent=Number.isFinite(Number(m.EURUSD))?Number(m.EURUSD).toFixed(4):'—';
     $('gbpTicker').textContent=Number.isFinite(Number(m.GBPUSD))?Number(m.GBPUSD).toFixed(4):'—';
     $('jpyTicker').textContent=Number.isFinite(Number(m.USDJPY))?Number(m.USDJPY).toFixed(2):'—';
