@@ -1,0 +1,24 @@
+OptiTrade v2.13.3 — Receiving Wallet Visibility Hardening
+
+Why this exists:
+Some active wallets could remain tied to an older global admin/super-admin database row.
+The previous resolver only read the currently preferred Super Admin ID.
+
+Fixes:
+- Customer deposit API now gathers ACTIVE receiving wallets owned by any global admin/super-admin record.
+- Assigned sub-admin wallets still override the same asset/network for that customer's scope.
+- Duplicate address entries are deduplicated.
+- Customer Deposit page now visibly lists Active Receiving Wallets immediately.
+- Each wallet card shows asset, network, address, label and XRP destination tag when present.
+- Copy Address button is available directly on the page.
+- Asset/network selector still works for the guided deposit flow.
+- The first matching wallet is selected immediately after load.
+- Render log remains:
+  [DEPOSIT OPTIONS] ... wallets=N assets=...
+
+Files:
+- server/app.js
+- public/deposit.html
+- package.json
+
+No .env, database, signing keys, passwords, API keys or node_modules included.

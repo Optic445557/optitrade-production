@@ -4253,12 +4253,26 @@ app.get('/api/deposit/quote',auth,async(req,res)=>{
  }catch(e){res.status(503).json({error:e.message||'Deposit reference price unavailable'})}
 });
 
+function globalDepositWallets(){
+ const preferred=superAdminId();
+ const rows=db.prepare(`SELECT w.id,w.label,w.asset,w.network,w.address,w.destination_tag,w.admin_id,u.role
+   FROM deposit_wallet_addresses w
+   JOIN users u ON u.id=w.admin_id
+   WHERE w.active=1
+     AND w.asset IN ('BTC','USDT','ETH','XRP')
+     AND u.role IN ('super_admin','admin')
+   ORDER BY CASE WHEN w.admin_id=? THEN 0 ELSE 1 END,w.asset,w.network,w.id DESC`).all(preferred||-1);
+ const seen=new Set(),out=[];
+ for(const w of rows){
+   const key=`${w.asset}|${w.network}|${w.address}`;
+   if(seen.has(key))continue;
+   seen.add(key);
+   out.push(w);
+ }
+ return out;
+}
 function effectiveDepositWalletsForUser(user){
- const saId=superAdminId();
- const global=saId?db.prepare(`SELECT id,label,asset,network,address,destination_tag,admin_id
-   FROM deposit_wallet_addresses
-   WHERE admin_id=? AND active=1 AND asset IN ('BTC','USDT','ETH','XRP')
-   ORDER BY asset,network,id`).all(saId):[];
+ const global=globalDepositWallets();
  const adminId=customerAdminId(user);
  if(!adminId)return global.map(w=>({...w,scope:'global'}));
  const local=db.prepare(`SELECT id,label,asset,network,address,destination_tag,admin_id
@@ -4281,7 +4295,7 @@ app.get('/api/deposit/options',auth,(req,res)=>{
  res.set('Cache-Control','no-store, no-cache, must-revalidate, private');
  const wallets=effectiveDepositWalletsForUser(req.user).map(w=>({id:w.id,label:w.label,asset:w.asset,network:w.network,address:w.address,destinationTag:w.destination_tag||null,scope:w.scope}));
  console.log(`[DEPOSIT OPTIONS] user=${req.user.id} owner=${req.user.owner_admin_id||'global'} globalAdmin=${superAdminId()||'none'} wallets=${wallets.length} assets=${wallets.map(w=>w.asset+':'+w.network).join(',')||'none'}`);
- res.json({wallets});
+ res.json({wallets,count:wallets.length});
 });
 app.get('/api/deposit/qr',auth,async(req,res)=>{
  if(req.user.role!=='user')return res.status(403).end();

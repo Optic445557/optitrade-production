@@ -1,5 +1,13 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Deposit | OptiTrade</title><link rel="stylesheet" href="/css/pages.css">  <link rel="stylesheet" href="/css/app-download-banner.css">
-</head><body>
+<style>
+.deposit-active-wallets{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px;margin-top:14px}
+.deposit-active-wallet{border:1px solid #24445f;border-radius:13px;background:#081727;padding:12px}
+.deposit-active-wallet .topline{display:flex;justify-content:space-between;gap:8px;align-items:center}
+.deposit-active-wallet .topline b{font-size:12px}.deposit-active-wallet .net{font-size:9px;color:#68dcff;font-weight:900}
+.deposit-active-wallet code{display:block;margin-top:9px;padding:9px;border-radius:8px;background:#050e18;color:#cfeeff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.deposit-active-wallet small{display:block;margin-top:6px;color:#7f9ab0}.deposit-active-wallet .tag{color:#f1d28a}
+.deposit-active-wallet button{margin-top:9px}
+</style></head><body>
 <header class="top"><a class="logo" href="/dashboard.html">↗ Opti<i>Trade</i></a><div class="top-right"><span class="status-pill">CRYPTO DEPOSIT</span><a class="pill" href="/profile.html" data-user-name>Account</a><button class="icon" data-logout>↪</button></div></header>
 <main class="shell"><a class="back" href="/dashboard.html">← Back to dashboard</a>
 <section class="hero"><div><div class="eyebrow">WALLET & FUNDS</div><h1>Deposit Funds</h1><p>Choose a receiving wallet, enter the USD amount you want credited, then send the displayed crypto equivalent.</p></div></section>
@@ -9,6 +17,11 @@
 <div class="grid"><section class="card span7"><div class="row"><div><h2>Choose Receiving Wallet</h2><p class="muted">Select the crypto asset and network you will use to fund your account.</p></div><span class="status-pill">STEP 1</span></div>
 <div class="stack" style="margin-top:18px"><div class="field"><label>Asset</label><select id="asset"></select></div><div class="field"><label>Network</label><select id="network"></select></div><button class="btn primary" id="nextDeposit">Continue →</button></div></section>
 <section class="card span5"><h3>How the amount works</h3><div class="stack"><div class="notice">Enter the <b>USD amount you want credited</b>. Example: entering <b>$1,000</b> means a $1,000 account-credit request — not 1,000 BTC.</div><div class="notice green">OptiTrade calculates the crypto amount to send using the current reference price. Admin can verify the payment before applying the final USD credit.</div></div></section></div>
+
+<section class="card" style="margin-top:18px" id="activeWalletSection">
+  <div class="section-head"><div><h2>Active Receiving Wallets</h2><p class="muted">These are the currently active deposit addresses configured by OptiTrade.</p></div><span class="status-pill" id="activeWalletCount">0 ACTIVE</span></div>
+  <div id="activeWalletCards" class="deposit-active-wallets"><div class="muted">Loading receiving wallets…</div></div>
+</section>
 
 <section class="card" style="margin-top:18px"><div class="section-head"><div><h2>Deposit Receipts</h2><p class="muted">Track every payment you marked as sent and open its receipt at any time.</p></div><button class="btn" id="refreshHistory">Refresh</button></div><div id="history" class="deposit-history"></div></section>
 </main>
@@ -45,6 +58,8 @@
    const assets=[...new Set(wallets.map(x=>x.asset))];
    A.innerHTML=assets.map(x=>`<option value="${esc(x)}">${x==='BTC'?'Bitcoin (BTC)':x==='ETH'?'Ethereum (ETH)':x==='XRP'?'XRP (XRP Ledger)':'Tether (USDT)'}</option>`).join('');
    loadNetworkOptions();
+   const rows=modalWallets();
+   if(rows.length)showWallet(rows[0]);
  }
  function loadNetworkOptions(){
    const nets=[...new Set(wallets.filter(x=>x.asset===A.value).map(x=>x.network))];
@@ -119,6 +134,18 @@
  let r=await fetch('/api/deposit/options',{cache:'no-store'}),d=await r.json().catch(()=>({}));
  if(!r.ok){toast(d.error||'Could not load receiving wallets.');return}
  wallets=d.wallets||[];
+ const cards=$('#activeWalletCards'),count=$('#activeWalletCount');
+ if(count)count.textContent=`${wallets.length} ACTIVE`;
+ if(cards){
+   cards.innerHTML=wallets.length?wallets.map(w=>`<article class="deposit-active-wallet">
+     <div class="topline"><b>${esc(w.asset)}</b><span class="net">${esc(w.network)}</span></div>
+     <code title="${esc(w.address)}">${esc(w.address)}</code>
+     ${w.destinationTag?`<small class="tag">Destination tag: <b>${esc(w.destinationTag)}</b></small>`:''}
+     <small>${esc(w.label||'OptiTrade receiving wallet')}</small>
+     <button class="btn" type="button" data-copy-wallet="${esc(w.address)}">Copy address</button>
+   </article>`).join(''):'<div class="notice">No active receiving wallets are currently available.</div>';
+   cards.querySelectorAll('[data-copy-wallet]').forEach(btn=>btn.onclick=async()=>{await navigator.clipboard.writeText(btn.dataset.copyWallet);toast('Receiving address copied.')});
+ }
  if(!wallets.length){
    A.innerHTML='<option>No receiving wallet available</option>';
    N.innerHTML='<option>—</option>';
