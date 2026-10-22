@@ -7,7 +7,7 @@
 .deposit-active-wallet code{display:block;margin-top:9px;padding:9px;border-radius:8px;background:#050e18;color:#cfeeff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .deposit-active-wallet small{display:block;margin-top:6px;color:#7f9ab0}.deposit-active-wallet .tag{color:#f1d28a}
 .deposit-active-wallet button{margin-top:9px}
-</style></head><body>
+</style></head><body data-deposit-build="2.13.5">
 <header class="top"><a class="logo" href="/dashboard.html">↗ Opti<i>Trade</i></a><div class="top-right"><span class="status-pill">CRYPTO DEPOSIT</span><a class="pill" href="/profile.html" data-user-name>Account</a><button class="icon" data-logout>↪</button></div></header>
 <main class="shell"><a class="back" href="/dashboard.html">← Back to dashboard</a>
 <section class="hero"><div><div class="eyebrow">WALLET & FUNDS</div><h1>Deposit Funds</h1><p>Choose a receiving wallet, enter the USD amount you want credited, then send the displayed crypto equivalent.</p></div></section>
@@ -31,7 +31,7 @@
 <div class="deposit-wallet-picker" id="walletPickerWrap" hidden><label>Receiving wallet<select id="walletChoice"></select></label></div>
 <div class="field"><label>USD amount to deposit</label><div class="deposit-usd-input"><span>$</span><input id="usdAmount" type="number" min="1" step="0.01" placeholder="1000.00"></div><small class="muted">This is the account-credit amount you are requesting.</small></div>
 <div class="deposit-send-summary"><div><span>Requested account credit</span><strong id="usdEstimate">$0.00</strong></div><div><span>Crypto amount to send</span><strong id="sendingAmount">Enter USD amount</strong></div></div>
-<div class="qr-address-grid"><div class="qr-panel"><img id="walletQr" alt="Receiving wallet QR code"><small>Scan with your wallet app.</small></div><div class="address-panel"><span>Send only <b id="addressAsset">crypto</b> on <b id="addressNetwork">this network</b> to:</span><code id="address">—</code><button class="btn" id="copyAddress" type="button">Copy Address</button></div></div>
+<div class="qr-address-grid"><div class="qr-panel"><img id="walletQr" alt="Receiving wallet QR code"><small>Scan with your wallet app.</small></div><div class="address-panel"><span>Send only <b id="addressAsset">crypto</b> on <b id="addressNetwork">this network</b> to:</span><code id="address">—</code><button class="btn" id="copyAddress" type="button">Copy Address</button></div></div><div id="xrpTagBox" class="notice" hidden style="margin-top:12px"><b>XRP Destination Tag</b><div class="wallet-address-box" style="margin-top:8px"><code id="destinationTagText">—</code><button class="btn" id="copyDestinationTag" type="button">Copy Tag</button></div><small>When shown, send XRP to the XRPL address and include this destination tag exactly.</small></div>
 <div class="stack"><div class="usd-estimate"><span>Reference conversion</span><small id="rateText">Enter the USD amount to calculate the crypto amount.</small></div><div class="field"><label>Transaction hash / TXID <span class="optional">(recommended)</span></label><input id="txid" maxlength="180" placeholder="Paste transaction hash if available"></div><div class="field"><label>Note <span class="optional">(optional)</span></label><input id="depositNote" maxlength="300" placeholder="Optional payment note"></div>
 <div class="deposit-confirm-box"><b>After you actually send the displayed crypto amount</b><p>Click the button below. This creates a Pending Review receipt; it does not claim the blockchain payment succeeded until the administrator verifies and accepts it.</p></div>
 <button class="btn primary deposit-sent-btn" id="submitDeposit">✓ I've Sent Payment</button></div></div></div>
@@ -73,7 +73,9 @@
    $('#selectedTitle').textContent=`Fund with ${A.value}`;
    $('#selectedNetwork').textContent=N.value+(w?.label?' • '+w.label:'');
    $('#addressAsset').textContent=A.value||'crypto';
-   const tag=w?.destinationTag||'';$('#xrpTagBox').hidden=!(w?.asset==='XRP'&&tag);$('#destinationTagText').textContent=tag||'—';
+   const tag=w?.destinationTag||'',tagBox=$('#xrpTagBox'),tagText=$('#destinationTagText');
+   if(tagBox)tagBox.hidden=!(w?.asset==='XRP'&&tag);
+   if(tagText)tagText.textContent=tag||'—';
    $('#addressNetwork').textContent=N.value||'this network';
    scheduleQuote(true);
  }
@@ -121,7 +123,8 @@
  $('#closeDepositModal').onclick=()=>$('#depositModal').hidden=true;
  $('#depositModal').onclick=e=>{if(e.target===$('#depositModal'))$('#depositModal').hidden=true};
  $('#copyAddress').onclick=async()=>{if(!selectedWallet)return;await navigator.clipboard.writeText(selectedWallet.address);toast('Receiving address copied.')};
- $('#copyDestinationTag').onclick=async()=>{const tag=selectedWallet?.destinationTag;if(!tag)return;await navigator.clipboard.writeText(tag);toast('XRP destination tag copied.')};
+ const copyTagBtn=$('#copyDestinationTag');
+ if(copyTagBtn)copyTagBtn.onclick=async()=>{const tag=selectedWallet?.destinationTag;if(!tag)return;await navigator.clipboard.writeText(tag);toast('XRP destination tag copied.')};
  $('#usdAmount').oninput=()=>scheduleQuote(false);
  function statusLabel(x){return x.status==='approved'?'Approved & Credited':x.status==='rejected'?'Declined':'Pending Review'}
  async function hist(){
